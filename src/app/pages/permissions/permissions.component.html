@@ -1,0 +1,36 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Permissions</h1>
+    <button mat-flat-button color="primary" (click)="onCreateClick()">
+      <mat-icon>add</mat-icon>
+      New Permission
+    </button>
+  </div>
+
+  @if (showForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="permissionForm"
+        [fields]="fields"
+        [isEditing]="isEditing"
+        [isLoading]="isLoading"
+        (submitted)="onSubmit()"
+        (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-data-table
+      [data]="permissions"
+      [columns]="columns"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+    ></app-data-table>
+  }
+</div>
