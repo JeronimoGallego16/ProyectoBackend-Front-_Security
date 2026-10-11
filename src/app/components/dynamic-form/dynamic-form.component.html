@@ -1,0 +1,50 @@
+<mat-card>
+  <mat-card-content>
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="grid gap-4 pt-2"
+    >
+      @for (field of fields; track field.name) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ field.label }}</mat-label>
+
+          @if (field.type === 'textarea') {
+            <textarea
+              matInput
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder ?? ''"
+            ></textarea>
+          } @else {
+            <input
+              matInput
+              [type]="field.type"
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder ?? ''"
+            />
+          }
+
+        </mat-form-field>
+      }
+
+      <div class="flex gap-2 justify-end">
+        <button
+          mat-button
+          type="button"
+          [disabled]="isLoading"
+          (click)="cancelled.emit()"
+        >
+          Cancel
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="isLoading || form.invalid"
+        >
+          {{ isEditing ? 'Update' : 'Create' }}
+        </button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

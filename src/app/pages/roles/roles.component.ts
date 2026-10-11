@@ -12,6 +12,10 @@ import {
   DataTableComponent,
   TableColumn,
 } from 'src/app/components/table-list/table-list.component';
+import {
+  DynamicFormComponent,
+  FormFieldConfig,
+} from 'src/app/components/dynamic-form/dynamic-form.component';
 import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
@@ -31,6 +35,7 @@ import { RoleService } from 'src/app/services/role.service';
     MaterialModule,
     ReactiveFormsModule,
     DataTableComponent,
+    DynamicFormComponent,
   ],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
@@ -43,6 +48,21 @@ export class RolesComponent implements OnInit {
     { field: 'id', header: 'ID' },
     { field: 'name', header: 'Name' },
     { field: 'description', header: 'Description' },
+  ];
+
+  public fields: FormFieldConfig[] = [
+    {
+      name: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Role name',
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'text',
+      placeholder: 'Role description',
+    },
   ];
 
   public roles: Role[] = [];
