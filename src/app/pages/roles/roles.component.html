@@ -28,9 +28,11 @@
     <app-data-table
       [data]="roles"
       [columns]="columns"
+      [actions]="actions"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (delete)="onDelete($event)"
+      (customAction)="onCustomAction($event)"
     ></app-data-table>
   }
 </div>

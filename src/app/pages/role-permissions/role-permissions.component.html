@@ -1,0 +1,44 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Role Permissions</h1>
+      @if (roleName) {
+        <p class="text-gray-600">Role: {{ roleName }}</p>
+      }
+    </div>
+    <button mat-stroked-button type="button" (click)="onGoBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to roles
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-selectable-table
+      [data]="permissions"
+      [columns]="columns"
+      [initialSelectedIds]="assignedPermissionIds"
+      (selectionChange)="onSelectionChange($event)"
+    ></app-selectable-table>
+
+    <div class="flex justify-end mt-4">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="isSaving"
+        (click)="onAssignPermissions()"
+      >
+        @if (isSaving) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        Save permissions
+      </button>
+    </div>
+  }
+</div>
