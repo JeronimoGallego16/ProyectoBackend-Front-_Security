@@ -40,7 +40,14 @@ export const routes: Routes = [
           import('./pages/permissions/permissions.component').then(
             (m) => m.PermissionsComponent
           ),
-      }
+      },
+      {
+        path: 'role-permissions',
+        loadChildren: () =>
+          import('./pages/role-permissions/role-permissions.routes').then(
+            (m) => m.RolePermissionsRoutes
+          ),
+      },
     ],
   },
   {

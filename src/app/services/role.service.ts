@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { Role } from '../models/role.model';
 import { RoleRequestDTO } from '../models/dtos/role-request.dto';
+import { RoleDetailWithPermissions } from '../models/role-detail-with-permissions.model';
 
 /**
  * Service responsible for consuming the security microservice `Role` REST
@@ -43,6 +44,18 @@ export class RoleService {
    */
   public findById(id: number): Observable<Role> {
     return this.http.get<Role>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Retrieves detailed information of a role including all permissions assigned to it.
+   *
+   * @param id - Unique identifier of the role.
+   * @returns Observable emitting the role details with its permissions.
+   */
+  public findByIdWithPermissions(id: number): Observable<RoleDetailWithPermissions> {
+    return this.http.get<RoleDetailWithPermissions>(
+      `${this.baseUrl}/${id}/detail-with-permissions`
+    );
   }
 
   /**
