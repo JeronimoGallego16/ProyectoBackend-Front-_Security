@@ -6,7 +6,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
 import {
   DataTableComponent,
@@ -20,6 +19,7 @@ import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
 import { RoleService } from 'src/app/services/role.service';
+import { ToastService } from 'src/app/services/toast.service';
 
 /**
  * Presentation layer page that orchestrates the full CRUD lifecycle of the
@@ -77,12 +77,12 @@ export class RolesComponent implements OnInit {
    *
    * @param formBuilder - Angular service used to build the reactive form.
    * @param roleService - Service that provides role data access.
-   * @param snackBar - Angular Material service used to show user feedback.
+   * @param toastService - Service used to publish user feedback notifications.
    */
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly roleService: RoleService,
-    private readonly snackBar: MatSnackBar
+    private readonly toastService: ToastService
   ) {
     this.roleForm = this.formBuilder.group({
       name: ['', [Validators.required]],
@@ -107,7 +107,7 @@ export class RolesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (roles: Role[]) => (this.roles = roles),
-        error: () => this.showMessage('Could not load roles. Please try again.'),
+        error: () => this.toastService.error('Could not load roles. Please try again.'),
       });
   }
 
@@ -142,7 +142,7 @@ export class RolesComponent implements OnInit {
    * @param role - Role selected from the table.
    */
   public onView(role: Role): void {
-    this.showMessage(`Role #${role.id}: ${role.name} - ${role.description}`);
+    this.toastService.info(`Role #${role.id}: ${role.name} - ${role.description}`);
   }
 
   /**
@@ -156,6 +156,7 @@ export class RolesComponent implements OnInit {
     );
 
     if (!confirmed) {
+      this.toastService.info('Deletion cancelled.');
       return;
     }
 
@@ -165,10 +166,10 @@ export class RolesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
-          this.showMessage('Role deleted successfully.');
+          this.toastService.success('Role deleted successfully.');
           this.loadRoles();
         },
-        error: () => this.showMessage('Could not delete the role.'),
+        error: () => this.toastService.error('Could not delete the role.'),
       });
   }
 
@@ -179,6 +180,7 @@ export class RolesComponent implements OnInit {
   public onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
+      this.toastService.warning('Please complete all required fields before saving.');
       return;
     }
 
@@ -192,7 +194,7 @@ export class RolesComponent implements OnInit {
 
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: () => {
-        this.showMessage(
+        this.toastService.success(
           this.isEditing
             ? 'Role updated successfully.'
             : 'Role created successfully.'
@@ -201,7 +203,7 @@ export class RolesComponent implements OnInit {
         this.loadRoles();
       },
       error: () =>
-        this.showMessage('Could not save the role. Please verify the data.'),
+        this.toastService.error('Could not save the role. Please verify the data.'),
     });
   }
 
@@ -227,16 +229,4 @@ export class RolesComponent implements OnInit {
     };
   }
 
-  /**
-   * Shows a short notification message to the user.
-   *
-   * @param message - Text to display in the snack bar.
-   */
-  private showMessage(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-    });
-  }
 }
