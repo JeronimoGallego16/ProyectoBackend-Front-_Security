@@ -1,0 +1,62 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Profiles</h1>
+  </div>
+
+  @if (selectedUser) {
+    <div class="mb-6 flex items-center gap-3">
+      <div>
+        <p class="text-sm text-gray-500">Selected user</p>
+        <p class="text-lg font-semibold text-gray-800">
+          #{{ selectedUser.id }} - {{ selectedUser.name }} ({{ selectedUser.email }})
+        </p>
+      </div>
+      <button mat-button color="warn" class="ml-auto" (click)="clearSelection()">Change user</button>
+    </div>
+  }
+
+  @if (!selectedUser) {
+    <p class="mb-4 text-gray-600">
+      Select a user from the table to create, view, edit or delete their profile.
+    </p>
+    @if (isLoading) {
+      <div class="flex justify-center py-6">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else {
+      <app-data-table
+        [data]="users"
+        [columns]="userColumns"
+        (view)="onManageProfile($event)"
+      ></app-data-table>
+    }
+  } @else {
+    @if (isLoading && !showForm) {
+      <div class="flex justify-center py-6">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (showForm) {
+      <div class="mb-4">
+        <app-dynamic-form
+          [form]="profileForm"
+          [fields]="fields"
+          [isEditing]="isEditing"
+          [isLoading]="isLoading"
+          (submitted)="onSubmit()"
+          (cancelled)="cancelForm()"
+        ></app-dynamic-form>
+      </div>
+
+      @if (isEditing) {
+        <div class="flex justify-end">
+          <button mat-stroked-button color="warn" [disabled]="isLoading" (click)="onDelete()">
+            <mat-icon>delete</mat-icon>
+            Delete profile
+          </button>
+        </div>
+      }
+    }
+  }
+</div>
