@@ -27,6 +27,8 @@ export interface ToastOptions {
   type?: ToastType;
   /** Optional bold heading displayed above the message. */
   title?: string;
+  /** Optional domain/application code shown next to the message (e.g. ROLE_CREATE_SUCCESS). */
+  code?: string;
   /** Milliseconds before the toast auto-dismisses. Use 0 to keep it open. */
   duration?: number;
   /** Screen region where the toast is anchored. */
@@ -43,6 +45,7 @@ export interface Toast {
   message: string;
   type: ToastType;
   title?: string;
+  code?: string;
   duration: number;
   position: ToastPosition;
   dismissible: boolean;

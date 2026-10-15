@@ -4,6 +4,11 @@
   </div>
 
   <div class="min-w-0 flex-1">
+    @if (toast.code) {
+      <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+        {{ toast.code }}
+      </p>
+    }
     @if (toast.title) {
       <p class="text-sm font-semibold leading-tight text-black">
         {{ toast.title }}

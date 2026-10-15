@@ -1,21 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { DataTableComponent, TableColumn } from 'src/app/components/table-list/table-list.component';
 import { DynamicFormComponent, FormFieldConfig } from 'src/app/components/dynamic-form/dynamic-form.component';
+import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { MaterialModule } from 'src/app/material.module';
-import { User } from 'src/app/models/user.model';
 import { Profile } from 'src/app/models/profile.model';
 import { ProfileRequestDTO } from 'src/app/models/dtos/profile-request.dto';
 import { ProfileService } from 'src/app/services/profile.service';
 import { UserService } from 'src/app/services/user.service';
-import { ToastService } from 'src/app/services/toast.service';
+import { FeedbackService } from 'src/app/services/feedback.service';
+
+interface ProfileTableRow {
+  id: number;
+  userId: number;
+  userName: string;
+  phone: string;
+  birthDate: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -26,15 +35,18 @@ import { ToastService } from 'src/app/services/toast.service';
     ReactiveFormsModule,
     DataTableComponent,
     DynamicFormComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })
 export class ProfileComponent implements OnInit {
-  public userColumns: TableColumn[] = [
-    { field: 'id', header: 'ID' },
-    { field: 'name', header: 'Name' },
-    { field: 'email', header: 'Email' },
+  public columns: TableColumn[] = [
+    { field: 'id', header: 'Profile ID' },
+    { field: 'userId', header: 'User ID' },
+    { field: 'userName', header: 'User' },
+    { field: 'phone', header: 'Phone' },
+    { field: 'birthDate', header: 'Birth date' },
   ];
 
   public fields: FormFieldConfig[] = [
@@ -42,21 +54,35 @@ export class ProfileComponent implements OnInit {
     { name: 'birthDate', label: 'Birth date', type: 'date', placeholder: 'Birth date' },
   ];
 
-  public users: User[] = [];
-  public selectedUser: User | null = null;
+  public lookupFields: FormFieldConfig[] = [
+    { name: 'userId', label: 'User ID', type: 'text', placeholder: 'User ID' },
+  ];
+
+  public profiles: ProfileTableRow[] = [];
+  public selectedUserId: number | null = null;
+  public selectedUserName = '';
   public currentProfile: Profile | null = null;
   public isLoading = false;
   public showForm = false;
+  public showLookup = false;
+  public viewOnly = false;
   public isEditing = false;
+  public isCreateFlow = false;
+  public confirmDeleteOpen = false;
 
+  public lookupForm: FormGroup;
   public profileForm: FormGroup;
 
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly userService: UserService,
     private readonly profileService: ProfileService,
-    private readonly toastService: ToastService
+    private readonly feedbackService: FeedbackService
   ) {
+    this.lookupForm = this.formBuilder.group({
+      userId: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
+    });
+
     this.profileForm = this.formBuilder.group({
       phone: ['', [Validators.required, Validators.maxLength(30)]],
       birthDate: ['', [Validators.required]],
@@ -64,56 +90,210 @@ export class ProfileComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.loadUsers();
+    this.loadProfiles();
   }
 
-  public loadUsers(): void {
+  public loadProfiles(): void {
     this.isLoading = true;
-    this.userService
-      .findAll()
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (users) => (this.users = users),
-        error: () => this.toastService.error('Could not load users.'),
-      });
+    this.userService.findAll().subscribe({
+      next: (users) => {
+        if (!users || users.length === 0) {
+          this.profiles = [];
+          this.isLoading = false;
+          return;
+        }
+
+        const requests = users.map((user) =>
+          this.profileService.findByUserId(user.id).pipe(
+            map((profile) => ({
+              id: profile.id,
+              userId: user.id,
+              userName: user.name,
+              phone: profile.phone,
+              birthDate: profile.birthDate,
+            } as ProfileTableRow)),
+            catchError(() => of(null))
+          )
+        );
+
+        forkJoin(requests).subscribe({
+          next: (rows) => {
+            this.profiles = rows.filter((row): row is ProfileTableRow => row !== null);
+            this.isLoading = false;
+          },
+          error: (error) => {
+            this.feedbackService.error(String(error?.status ?? 500), 'Could not load profiles.');
+            this.isLoading = false;
+          },
+        });
+      },
+      error: (error) => {
+        this.feedbackService.error(String(error?.status ?? 500), 'Could not load users.');
+        this.isLoading = false;
+      },
+    });
   }
 
-  public onManageProfile(user: User): void {
-    this.selectedUser = user;
+  public onCreateClick(): void {
+    this.isCreateFlow = true;
+    this.selectedUserId = null;
+    this.selectedUserName = '';
     this.currentProfile = null;
+    this.viewOnly = false;
     this.showForm = false;
-    this.profileForm.reset({ phone: '', birthDate: '' });
+    this.showLookup = true;
+    this.lookupForm.reset({ userId: '' });
+    this.feedbackService.info('INFO', 'Enter a user ID to create a profile.');
+  }
 
-    this.profileService.findByUserId(user.id).subscribe({
+  public onLookupUser(): void {
+    if (this.lookupForm.invalid) {
+      this.lookupForm.markAllAsTouched();
+      this.feedbackService.warning('400', 'Please enter a user ID.');
+      return;
+    }
+
+    const userId = Number(this.lookupForm.value.userId);
+
+    if (isNaN(userId) || userId <= 0) {
+      this.feedbackService.warning('400', 'Please enter a valid user ID.');
+      return;
+    }
+
+    this.userService.findById(userId).subscribe({
+      next: (user) => {
+        if (this.isCreateFlow) {
+          this.profileService.findByUserId(userId).subscribe({
+            next: () => {
+              this.feedbackService.error('409', 'This user already has a profile.');
+              this.isCreateFlow = false;
+              this.showLookup = true;
+            },
+            error: (error) => {
+              if (error?.status === 404) {
+                this.selectedUserId = user.id;
+                this.selectedUserName = user.name;
+                this.currentProfile = null;
+                this.isEditing = false;
+                this.viewOnly = false;
+                this.showLookup = false;
+                this.showForm = true;
+                this.profileForm.reset({ phone: '', birthDate: null });
+              } else {
+                this.feedbackService.error(String(error?.status ?? 500), 'Could not check the profile.');
+              }
+            },
+          });
+        } else {
+          this.showLookup = false;
+          this.onManageProfileById(userId, user.name);
+        }
+      },
+      error: (error) => this.feedbackService.error(String(error?.status ?? 404), 'User not found.'),
+    });
+  }
+
+  public onManageProfile(row: ProfileTableRow): void {
+    this.onManageProfileById(row.userId, row.userName);
+  }
+
+  private onManageProfileById(userId: number, userName = ''): void {
+    this.isCreateFlow = false;
+    this.viewOnly = true;
+    this.showForm = false;
+    this.selectedUserId = userId;
+    this.selectedUserName = userName;
+    this.showLookup = false;
+    this.isLoading = true;
+    this.currentProfile = null;
+
+    this.profileService.findByUserId(userId).pipe(finalize(() => (this.isLoading = false))).subscribe({
+      next: (profile) => {
+        this.currentProfile = profile;
+        this.feedbackService.info('200', `Profile loaded for user #${userId}.`);
+      },
+      error: (error) => {
+        if (error?.status === 404) {
+          this.currentProfile = null;
+          this.feedbackService.warning('404', `User #${userId} has no profile yet.`);
+        } else {
+          this.feedbackService.error(String(error?.status ?? 500), 'Could not load the profile.');
+        }
+      },
+    });
+  }
+
+  public onEditProfile(row: ProfileTableRow): void {
+    this.isCreateFlow = false;
+    this.viewOnly = false;
+    this.selectedUserId = row.userId;
+    this.selectedUserName = row.userName;
+    this.showLookup = false;
+    this.showForm = false;
+    this.isLoading = true;
+    this.currentProfile = null;
+
+    this.profileService.findByUserId(row.userId).pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: (profile) => {
         this.currentProfile = profile;
         this.isEditing = true;
         this.profileForm.patchValue({
           phone: profile.phone,
-          birthDate: profile.birthDate,
+          birthDate: profile.birthDate ? new Date(profile.birthDate + 'T00:00:00') : null,
         });
         this.showForm = true;
-        this.toastService.info(`Profile loaded for user #${user.id}.`);
       },
       error: (error) => {
         if (error?.status === 404) {
           this.currentProfile = null;
           this.isEditing = false;
-          this.profileForm.reset({ phone: '', birthDate: '' });
+          this.profileForm.reset({ phone: '', birthDate: null });
           this.showForm = true;
-          this.toastService.info(`No profile yet for user #${user.id}. You can create one.`);
+          this.feedbackService.info('404', `No profile yet for user #${row.userId}. You can create one.`);
         } else {
-          this.toastService.error('Could not load the profile.');
+          this.feedbackService.error(String(error?.status ?? 500), 'Could not load the profile.');
+        }
+      },
+    });
+  }
+
+  public onDeleteProfile(row: ProfileTableRow): void {
+    this.isCreateFlow = false;
+    this.viewOnly = false;
+    this.selectedUserId = row.userId;
+    this.selectedUserName = row.userName;
+    this.showLookup = false;
+    this.showForm = false;
+    this.isLoading = true;
+    this.currentProfile = null;
+
+    this.profileService.findByUserId(row.userId).pipe(finalize(() => (this.isLoading = false))).subscribe({
+      next: (profile) => {
+        this.currentProfile = profile;
+        this.confirmDeleteOpen = true;
+      },
+      error: (error) => {
+        if (error?.status === 404) {
+          this.feedbackService.warning('404', `User #${row.userId} has no profile to delete.`);
+        } else {
+          this.feedbackService.error(String(error?.status ?? 500), 'Could not load the profile.');
         }
       },
     });
   }
 
   public onSubmit(): void {
-    if (!this.selectedUser) return;
+    if (!this.selectedUserId) return;
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
-      this.toastService.warning('Please complete all required fields before saving.');
+      this.feedbackService.warning('400', 'Please complete all required fields before saving.');
+      return;
+    }
+
+    const birthDate = this.profileForm.value.birthDate as Date | null;
+
+    if (birthDate && birthDate > new Date()) {
+      this.feedbackService.warning('400', 'Invalid date');
       return;
     }
 
@@ -121,67 +301,95 @@ export class ProfileComponent implements OnInit {
     this.isLoading = true;
 
     const request$ = this.isEditing
-      ? this.profileService.update(this.selectedUser.id, payload)
-      : this.profileService.create(this.selectedUser.id, payload);
+      ? this.profileService.update(this.selectedUserId, payload)
+      : this.profileService.create(this.selectedUserId, payload);
 
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: (profile) => {
         const wasEditing = this.isEditing;
         this.currentProfile = profile;
         this.isEditing = true;
-        this.toastService.success(wasEditing ? 'Profile updated successfully.' : 'Profile created successfully.');
+
+        if (wasEditing) {
+          this.feedbackService.success('200', 'Profile updated successfully.');
+        } else {
+          this.feedbackService.success('201', 'Profile created successfully.');
+        }
+
+        this.loadProfiles();
+        this.clearSelection();
       },
       error: (error) => {
         if (error?.status === 409) {
-          this.toastService.warning('This user already has a profile.');
+          this.feedbackService.warning('409', 'This user already has a profile.');
         } else {
-          this.toastService.error('Could not save the profile. Please verify the data.');
+          this.feedbackService.error(String(error?.status ?? 500), 'Could not save the profile. Please verify the data.');
         }
       },
     });
   }
 
   public onDelete(): void {
-    if (!this.selectedUser || !this.currentProfile) return;
+    if (!this.selectedUserId || !this.currentProfile) return;
+    this.confirmDeleteOpen = true;
+  }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the profile of "${this.selectedUser.name}"?`
-    );
-    if (!confirmed) {
-      this.toastService.info('Deletion cancelled.');
-      return;
-    }
+  public onConfirmDelete(): void {
+    if (!this.selectedUserId) return;
 
     this.isLoading = true;
     this.profileService
-      .delete(this.selectedUser.id)
+      .delete(this.selectedUserId)
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
           this.currentProfile = null;
           this.isEditing = false;
-          this.profileForm.reset({ phone: '', birthDate: '' });
-          this.toastService.success('Profile deleted successfully.');
+          this.profileForm.reset({ phone: '', birthDate: null });
+          this.confirmDeleteOpen = false;
+          this.feedbackService.success('204', 'Profile deleted successfully.');
+          this.loadProfiles();
+          this.clearSelection();
         },
-        error: () => this.toastService.error('Could not delete the profile.'),
+        error: (error) => {
+          this.feedbackService.error(String(error?.status ?? 500), 'Could not delete the profile.');
+          this.confirmDeleteOpen = false;
+        },
       });
   }
 
+  public onCancelDelete(): void {
+    this.confirmDeleteOpen = false;
+    this.feedbackService.info('CANCELLED', 'Deletion cancelled.');
+  }
+
   public cancelForm(): void {
-    if (this.selectedUser) this.onManageProfile(this.selectedUser);
+    this.feedbackService.info('CANCELLED', 'Edition cancelled.');
+    this.clearSelection();
   }
 
   public clearSelection(): void {
-    this.selectedUser = null;
+    this.isCreateFlow = false;
+    this.selectedUserId = null;
+    this.selectedUserName = '';
+    this.showLookup = false;
+    this.viewOnly = false;
     this.currentProfile = null;
     this.showForm = false;
-    this.profileForm.reset({ phone: '', birthDate: '' });
+    this.profileForm.reset({ phone: '', birthDate: null });
   }
 
   private buildPayload(): ProfileRequestDTO {
+    const birthDate = this.profileForm.value.birthDate;
+
     return {
       phone: this.profileForm.value.phone as string,
-      birthDate: this.profileForm.value.birthDate as string,
+      birthDate:
+        birthDate instanceof Date
+          ? `${birthDate.getFullYear()}-${String(birthDate.getMonth() + 1).padStart(2, '0')}-${String(
+              birthDate.getDate()
+            ).padStart(2, '0')}`
+          : (birthDate as string),
     };
   }
 }

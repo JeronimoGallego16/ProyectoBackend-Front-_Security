@@ -56,6 +56,7 @@ export class ToastService {
       message: options.message,
       type: options.type ?? TOAST_DEFAULTS.type,
       title: options.title,
+      code: options.code,
       duration: options.duration ?? TOAST_DEFAULTS.duration,
       position: options.position ?? TOAST_DEFAULTS.position,
       dismissible: options.dismissible ?? TOAST_DEFAULTS.dismissible,
