@@ -21,6 +21,7 @@ import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
 import { RoleService } from 'src/app/services/role.service';
 import { FeedbackService } from 'src/app/services/feedback.service';
+import { HTTP_CODE } from 'src/app/models/http-code';
 
 @Component({
   selector: 'app-roles',
@@ -90,7 +91,7 @@ export class RolesComponent implements OnInit {
       .subscribe({
         next: (roles: Role[]) => (this.roles = roles),
         error: (error) =>
-          this.feedbackService.error(String(error?.status ?? 500), 'Could not load roles. Please try again.'),
+          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load roles. Please try again.'),
       });
   }
 
@@ -112,7 +113,7 @@ export class RolesComponent implements OnInit {
   }
 
   public onView(role: Role): void {
-    this.feedbackService.info('200', `Role #${role.id}: ${role.name} - ${role.description}`);
+    this.feedbackService.info(HTTP_CODE.OK, `Role #${role.id}: ${role.name} - ${role.description}`);
   }
 
   public onDelete(role: Role): void {
@@ -130,13 +131,13 @@ export class RolesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
-          this.feedbackService.success('204', 'Role deleted successfully.');
+          this.feedbackService.success(HTTP_CODE.NO_CONTENT, 'Role deleted successfully.');
           this.confirmDeleteOpen = false;
           this.pendingDeleteRole = null;
           this.loadRoles();
         },
         error: (error) => {
-          this.feedbackService.error(String(error?.status ?? 500), 'Could not delete the role.');
+          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not delete the role.');
           this.confirmDeleteOpen = false;
           this.pendingDeleteRole = null;
         },
@@ -146,13 +147,13 @@ export class RolesComponent implements OnInit {
   public onCancelDelete(): void {
     this.confirmDeleteOpen = false;
     this.pendingDeleteRole = null;
-    this.feedbackService.info('CANCELLED', 'Deletion cancelled.');
+    this.feedbackService.info(HTTP_CODE.CANCELLED, 'Deletion cancelled.');
   }
 
   public onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
-      this.feedbackService.warning('400', 'Please complete all required fields before saving.');
+      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Please complete all required fields before saving.');
       return;
     }
 
@@ -168,7 +169,7 @@ export class RolesComponent implements OnInit {
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: () => {
         this.feedbackService.success(
-          wasEditing ? '200' : '201',
+          wasEditing ? HTTP_CODE.OK : HTTP_CODE.CREATED,
           wasEditing ? 'Role updated successfully.' : 'Role created successfully.'
         );
         this.cancelForm();
