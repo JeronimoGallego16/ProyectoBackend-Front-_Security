@@ -1,39 +1,72 @@
 <div class="p-6">
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold text-gray-800">Profiles</h1>
+    <button mat-flat-button color="primary" (click)="onCreateClick()">
+      <mat-icon>add</mat-icon>
+      New profile
+    </button>
   </div>
 
-  @if (selectedUser) {
+  @if (selectedUserId) {
     <div class="mb-6 flex items-center gap-3">
       <div>
         <p class="text-sm text-gray-500">Selected user</p>
         <p class="text-lg font-semibold text-gray-800">
-          #{{ selectedUser.id }} - {{ selectedUser.name }} ({{ selectedUser.email }})
+          #{{ selectedUserId }} - {{ selectedUserName }}
         </p>
       </div>
-      <button mat-button color="warn" class="ml-auto" (click)="clearSelection()">Change user</button>
     </div>
   }
 
-  @if (!selectedUser) {
-    <p class="mb-4 text-gray-600">
-      Select a user from the table to create, view, edit or delete their profile.
-    </p>
+  @if (!selectedUserId && showLookup) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="lookupForm"
+        [fields]="lookupFields"
+        [isEditing]="false"
+        [isLoading]="isLoading"
+        (submitted)="onLookupUser()"
+        (cancelled)="clearSelection()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (!selectedUserId) {
     @if (isLoading) {
       <div class="flex justify-center py-6">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
     } @else {
       <app-data-table
-        [data]="users"
-        [columns]="userColumns"
+        [data]="profiles"
+        [columns]="columns"
         (view)="onManageProfile($event)"
+        (edit)="onEditProfile($event)"
+        (delete)="onDeleteProfile($event)"
       ></app-data-table>
     }
   } @else {
-    @if (isLoading && !showForm) {
+    @if (isLoading && !showForm && !viewOnly) {
       <div class="flex justify-center py-6">
         <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (viewOnly) {
+      @if (currentProfile) {
+        <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="mb-2 text-lg font-semibold text-gray-900">Profile details</h3>
+          <p class="text-sm text-gray-700"><strong>Phone:</strong> {{ currentProfile.phone }}</p>
+          <p class="text-sm text-gray-700"><strong>Birth date:</strong> {{ currentProfile.birthDate }}</p>
+        </div>
+      } @else if (!isLoading) {
+        <p class="mb-4 text-gray-600">This user has no profile yet.</p>
+      }
+      <div class="flex justify-end">
+        <button mat-stroked-button type="button" (click)="clearSelection()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to profiles
+        </button>
       </div>
     }
 
@@ -48,15 +81,14 @@
           (cancelled)="cancelForm()"
         ></app-dynamic-form>
       </div>
-
-      @if (isEditing) {
-        <div class="flex justify-end">
-          <button mat-stroked-button color="warn" [disabled]="isLoading" (click)="onDelete()">
-            <mat-icon>delete</mat-icon>
-            Delete profile
-          </button>
-        </div>
-      }
     }
+
+    <app-confirm-dialog
+      [open]="confirmDeleteOpen"
+      title="Delete profile"
+      [message]="selectedUserId ? 'Are you sure you want to delete the profile of user #' + selectedUserId + ' (' + selectedUserName + ')?' : 'Are you sure?'"
+      (confirm)="onConfirmDelete()"
+      (cancel)="onCancelDelete()"
+    ></app-confirm-dialog>
   }
 </div>
