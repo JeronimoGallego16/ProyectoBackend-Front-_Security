@@ -20,8 +20,8 @@ import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
 import { RoleService } from 'src/app/services/role.service';
-import { FeedbackService } from 'src/app/services/feedback.service';
-import { HTTP_CODE } from 'src/app/models/http-code';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { FeedbackCase } from 'src/app/models/feedback-case';
 
 @Component({
   selector: 'app-roles',
@@ -71,7 +71,7 @@ export class RolesComponent implements OnInit {
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly roleService: RoleService,
-    private readonly feedbackService: FeedbackService
+    private readonly feedbackHandlerService: FeedbackHandlerService
   ) {
     this.roleForm = this.formBuilder.group({
       name: ['', [Validators.required]],
@@ -91,7 +91,7 @@ export class RolesComponent implements OnInit {
       .subscribe({
         next: (roles: Role[]) => (this.roles = roles),
         error: (error) =>
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load roles. Please try again.'),
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load roles. Please try again.'),
       });
   }
 
@@ -113,7 +113,7 @@ export class RolesComponent implements OnInit {
   }
 
   public onView(role: Role): void {
-    this.feedbackService.info(HTTP_CODE.OK, `Role #${role.id}: ${role.name} - ${role.description}`);
+    this.feedbackHandlerService.info(FeedbackCase.OK, `Role #${role.id}: ${role.name} - ${role.description}`);
   }
 
   public onDelete(role: Role): void {
@@ -131,13 +131,13 @@ export class RolesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
-          this.feedbackService.success(HTTP_CODE.NO_CONTENT, 'Role deleted successfully.');
+          this.feedbackHandlerService.success(FeedbackCase.NO_CONTENT, 'Role deleted successfully.');
           this.confirmDeleteOpen = false;
           this.pendingDeleteRole = null;
           this.loadRoles();
         },
         error: (error) => {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not delete the role.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the role.');
           this.confirmDeleteOpen = false;
           this.pendingDeleteRole = null;
         },
@@ -147,13 +147,13 @@ export class RolesComponent implements OnInit {
   public onCancelDelete(): void {
     this.confirmDeleteOpen = false;
     this.pendingDeleteRole = null;
-    this.feedbackService.info(HTTP_CODE.CANCELLED, 'Deletion cancelled.');
+    this.feedbackHandlerService.info(FeedbackCase.CANCELLED, 'Deletion cancelled.');
   }
 
   public onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
-      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Please complete all required fields before saving.');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Please complete all required fields before saving.');
       return;
     }
 
@@ -168,15 +168,15 @@ export class RolesComponent implements OnInit {
 
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: () => {
-        this.feedbackService.success(
-          wasEditing ? HTTP_CODE.OK : HTTP_CODE.CREATED,
+        this.feedbackHandlerService.success(
+          wasEditing ? FeedbackCase.OK : FeedbackCase.CREATED,
           wasEditing ? 'Role updated successfully.' : 'Role created successfully.'
         );
         this.cancelForm();
         this.loadRoles();
       },
       error: (error) =>
-        this.feedbackService.error(String(error?.status ?? 500), 'Could not save the role. Please verify the data.'),
+        this.feedbackHandlerService.error(String(error?.status ?? 500), 'Could not save the role. Please verify the data.'),
     });
   }
 
