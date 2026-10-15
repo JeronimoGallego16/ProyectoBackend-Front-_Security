@@ -16,8 +16,8 @@ import { Profile } from 'src/app/models/profile.model';
 import { ProfileRequestDTO } from 'src/app/models/dtos/profile-request.dto';
 import { ProfileService } from 'src/app/services/profile.service';
 import { UserService } from 'src/app/services/user.service';
-import { FeedbackService } from 'src/app/services/feedback.service';
-import { HTTP_CODE } from 'src/app/models/http-code';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { FeedbackCase } from 'src/app/models/feedback-case';
 
 interface ProfileTableRow {
   id: number;
@@ -78,7 +78,7 @@ export class ProfileComponent implements OnInit {
     private readonly formBuilder: FormBuilder,
     private readonly userService: UserService,
     private readonly profileService: ProfileService,
-    private readonly feedbackService: FeedbackService
+    private readonly feedbackHandlerService: FeedbackHandlerService
   ) {
     this.lookupForm = this.formBuilder.group({
       userId: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
@@ -123,13 +123,13 @@ export class ProfileComponent implements OnInit {
             this.isLoading = false;
           },
           error: (error) => {
-            this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load profiles.');
+            this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load profiles.');
             this.isLoading = false;
           },
         });
       },
       error: (error) => {
-        this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load users.');
+        this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load users.');
         this.isLoading = false;
       },
     });
@@ -144,20 +144,20 @@ export class ProfileComponent implements OnInit {
     this.showForm = false;
     this.showLookup = true;
     this.lookupForm.reset({ userId: '' });
-    this.feedbackService.info(HTTP_CODE.INFO, 'Enter a user ID to create a profile.');
+    this.feedbackHandlerService.info(FeedbackCase.INFO, 'Enter a user ID to create a profile.');
   }
 
   public onLookupUser(): void {
     if (this.lookupForm.invalid) {
       this.lookupForm.markAllAsTouched();
-      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Please enter a user ID.');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Please enter a user ID.');
       return;
     }
 
     const userId = Number(this.lookupForm.value.userId);
 
     if (isNaN(userId) || userId <= 0) {
-      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Please enter a valid user ID.');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Please enter a valid user ID.');
       return;
     }
 
@@ -166,7 +166,7 @@ export class ProfileComponent implements OnInit {
         if (this.isCreateFlow) {
           this.profileService.findByUserId(userId).subscribe({
             next: () => {
-              this.feedbackService.error(HTTP_CODE.CONFLICT, 'This user already has a profile.');
+              this.feedbackHandlerService.error(FeedbackCase.CONFLICT, 'This user already has a profile.');
               this.isCreateFlow = false;
               this.showLookup = true;
             },
@@ -181,7 +181,7 @@ export class ProfileComponent implements OnInit {
                 this.showForm = true;
                 this.profileForm.reset({ phone: '', birthDate: null });
               } else {
-                this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not check the profile.');
+                this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not check the profile.');
               }
             },
           });
@@ -190,7 +190,7 @@ export class ProfileComponent implements OnInit {
           this.onManageProfileById(userId, user.name);
         }
       },
-      error: (error) => this.feedbackService.error(String(error?.status ?? HTTP_CODE.NOT_FOUND), 'User not found.'),
+      error: (error) => this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.NOT_FOUND), 'User not found.'),
     });
   }
 
@@ -211,14 +211,14 @@ export class ProfileComponent implements OnInit {
     this.profileService.findByUserId(userId).pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: (profile) => {
         this.currentProfile = profile;
-        this.feedbackService.info(HTTP_CODE.OK, `Profile loaded for user #${userId}.`);
+        this.feedbackHandlerService.info(FeedbackCase.OK, `Profile loaded for user #${userId}.`);
       },
       error: (error) => {
         if (error?.status === 404) {
           this.currentProfile = null;
-          this.feedbackService.warning('404', `User #${userId} has no profile yet.`);
+          this.feedbackHandlerService.warning('404', `User #${userId} has no profile yet.`);
         } else {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load the profile.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load the profile.');
         }
       },
     });
@@ -250,9 +250,9 @@ export class ProfileComponent implements OnInit {
           this.isEditing = false;
           this.profileForm.reset({ phone: '', birthDate: null });
           this.showForm = true;
-          this.feedbackService.info('404', `No profile yet for user #${row.userId}. You can create one.`);
+          this.feedbackHandlerService.info('404', `No profile yet for user #${row.userId}. You can create one.`);
         } else {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load the profile.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load the profile.');
         }
       },
     });
@@ -275,9 +275,9 @@ export class ProfileComponent implements OnInit {
       },
       error: (error) => {
         if (error?.status === 404) {
-          this.feedbackService.warning('404', `User #${row.userId} has no profile to delete.`);
+          this.feedbackHandlerService.warning('404', `User #${row.userId} has no profile to delete.`);
         } else {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not load the profile.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load the profile.');
         }
       },
     });
@@ -287,14 +287,14 @@ export class ProfileComponent implements OnInit {
     if (!this.selectedUserId) return;
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
-      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Please complete all required fields before saving.');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Please complete all required fields before saving.');
       return;
     }
 
     const birthDate = this.profileForm.value.birthDate as Date | null;
 
     if (birthDate && birthDate > new Date()) {
-      this.feedbackService.warning(HTTP_CODE.BAD_REQUEST, 'Invalid date');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Invalid date');
       return;
     }
 
@@ -312,9 +312,9 @@ export class ProfileComponent implements OnInit {
         this.isEditing = true;
 
         if (wasEditing) {
-          this.feedbackService.success(HTTP_CODE.OK, 'Profile updated successfully.');
+          this.feedbackHandlerService.success(FeedbackCase.OK, 'Profile updated successfully.');
         } else {
-          this.feedbackService.success(HTTP_CODE.CREATED, 'Profile created successfully.');
+          this.feedbackHandlerService.success(FeedbackCase.CREATED, 'Profile created successfully.');
         }
 
         this.loadProfiles();
@@ -322,9 +322,9 @@ export class ProfileComponent implements OnInit {
       },
       error: (error) => {
         if (error?.status === 409) {
-          this.feedbackService.warning(HTTP_CODE.CONFLICT, 'This user already has a profile.');
+          this.feedbackHandlerService.warning(FeedbackCase.CONFLICT, 'This user already has a profile.');
         } else {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not save the profile. Please verify the data.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not save the profile. Please verify the data.');
         }
       },
     });
@@ -348,12 +348,12 @@ export class ProfileComponent implements OnInit {
           this.isEditing = false;
           this.profileForm.reset({ phone: '', birthDate: null });
           this.confirmDeleteOpen = false;
-          this.feedbackService.success(HTTP_CODE.NO_CONTENT, 'Profile deleted successfully.');
+          this.feedbackHandlerService.success(FeedbackCase.NO_CONTENT, 'Profile deleted successfully.');
           this.loadProfiles();
           this.clearSelection();
         },
         error: (error) => {
-          this.feedbackService.error(String(error?.status ?? HTTP_CODE.SERVER_ERROR), 'Could not delete the profile.');
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the profile.');
           this.confirmDeleteOpen = false;
         },
       });
@@ -361,11 +361,11 @@ export class ProfileComponent implements OnInit {
 
   public onCancelDelete(): void {
     this.confirmDeleteOpen = false;
-    this.feedbackService.info(HTTP_CODE.CANCELLED, 'Deletion cancelled.');
+    this.feedbackHandlerService.info(FeedbackCase.CANCELLED, 'Deletion cancelled.');
   }
 
   public cancelForm(): void {
-    this.feedbackService.info(HTTP_CODE.CANCELLED, 'Edition cancelled.');
+    this.feedbackHandlerService.info(FeedbackCase.CANCELLED, 'Edition cancelled.');
     this.clearSelection();
   }
 
