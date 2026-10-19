@@ -49,7 +49,7 @@
           mat-flat-button
           color="primary"
           type="submit"
-          [disabled]="isLoading || form.invalid"
+          [disabled]="isLoading || form.invalid || submitDisabled"
         >
           {{ isEditing ? 'Update' : 'Create' }}
         </button>
