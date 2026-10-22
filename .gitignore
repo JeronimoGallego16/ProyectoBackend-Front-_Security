@@ -41,5 +41,7 @@ testem.log
 .DS_Store
 Thumbs.db
 
-
+.front
 Agents.md
+
+frontend_modulo_seguridad.md

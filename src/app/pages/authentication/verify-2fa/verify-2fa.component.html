@@ -1,0 +1,28 @@
+<div class="flex min-h-screen w-full items-center justify-center p-4">
+  <mat-card class="cardWithShadow w-full max-w-lg p-4">
+    <mat-card-content>
+      <h1 class="mb-2 text-2xl font-semibold">Two-factor verification</h1>
+      <p class="mb-4 text-gray-600">Enter the verification code to continue.</p>
+
+      <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="status">
+        Two-factor verification is not connected. The backend contract currently
+        available does not define a 2FA verification endpoint, so no code will
+        be submitted or verified.
+      </div>
+
+      <form [formGroup]="form">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Verification code</mat-label>
+          <input matInput formControlName="code" autocomplete="one-time-code" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" class="w-full" type="button" disabled>
+          Verify code
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <a routerLink="/authentication/login" class="text-primary no-underline">Back to sign in</a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

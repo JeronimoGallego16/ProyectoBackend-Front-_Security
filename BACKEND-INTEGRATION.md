@@ -166,3 +166,21 @@ flujo de autenticación que suministre Bearer token. La autenticación, la
 autorización por rol, la renovación/revocación de JWT y la administración de
 sesiones siguen fuera de lo implementado y requieren decisiones/pruebas del
 lado backend.
+
+## Estado actual de autenticación frontend
+
+Esta sección actualiza cualquier referencia anterior que describa el login
+como una pantalla exclusivamente visual:
+
+- `/authentication/login` consume `POST /api/auth/login` mediante `AuthService`.
+- El `accessToken` se conserva únicamente en memoria y se limpia al alcanzar
+  `expiresAt`. No se escribe en `localStorage` ni en `sessionStorage`; al
+  recargar la aplicación, se debe iniciar sesión nuevamente.
+- `authInterceptor` agrega el encabezado Bearer a las solicitudes dirigidas a
+  la URL API configurada, excepto al endpoint de login.
+- `/authentication/verify-2fa` y `/authentication/forgot-password` existen
+  como interfaces informativas. Sus acciones siguen deshabilitadas porque el
+  backend compartido no especifica endpoints ni DTO para esos flujos.
+- El frontend no implementa cierre de sesión del lado servidor, guardas de
+  rutas ni autorización por rol/permiso. Limpiar el token en memoria no implica
+  que el backend lo revoque.
