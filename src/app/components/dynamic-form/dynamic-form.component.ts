@@ -17,6 +17,7 @@ export interface FormFieldConfig {
   label: string;
   type: FormFieldType;
   placeholder?: string;
+  hint?: string;
 }
 
 /**

@@ -1,168 +1,168 @@
-# Guía de integración del frontend con el backend
+# Integración del frontend con `ms_security`
 
-Este documento registra lo que el backend debe acordar y lo que habrá que
-adaptar en el frontend cuando exista una API. No define un contrato de API
-supuesto: las rutas, los nombres de campos, los DTO y las reglas de seguridad
-deben confirmarse con la implementación real del backend.
+Esta guía se actualizó a partir del contexto del backend compartido el
+21-10-2026. Las rutas, DTO y reglas descritas corresponden a ese resumen; no se
+inspeccionó ni ejecutó el repositorio backend desde este workspace. Antes de
+considerarlos contrato definitivo, deben verificarse contra el código actual y
+probarse con el servicio en ejecución.
 
-## Estado actual del frontend
+## Resumen del contrato compartido
 
-- La aplicación usa Angular con componentes standalone y rutas en
-  `src/app/app.routes.ts`.
-- `src/environment/environment.ts` define actualmente `apiUrl` como
-  `http://localhost:8181`.
-- `src/app/app.config.ts` configura `HttpClient` y el enrutador.
-- `src/app/services/user.service.ts` consulta `GET /api/users` y
-  `GET /api/users/{id}`. No implementa crear, actualizar o eliminar usuarios.
-- La pantalla inicial de usuarios está disponible en `/users`. Usa las dos
-  consultas de lectura existentes, muestra errores si no hay API disponible y
-  no simula datos ni resultados exitosos.
-- Los formularios de creación/edición están preparados visualmente, pero el
-  botón de guardar y la operación de eliminación permanecen deshabilitados o
-  pendientes hasta definir el contrato. No se añadieron métodos HTTP de
-  escritura.
-- `src/app/models/user.model.ts` define únicamente `id`, `name` y `email`.
-  El nombre `email` es el que usa hoy el frontend; debe compararse con el
-  contrato del backend (por ejemplo, podría llamarse `mail`).
-- El CRUD de roles en `src/app/pages/roles/` es el ejemplo más cercano:
-  reutiliza `DataTableComponent`, `DynamicFormComponent`,
-  `ConfirmDialogComponent`, `FeedbackHandlerService` y `RoleService`.
-- `src/app/components/dynamic-form/` dibuja campos configurados por la página
-  anfitriona. Actualmente admite `text`, `textarea` y `date`. La página
-  anfitriona define el `FormGroup`, validadores, carga, llamadas HTTP y
-  conversión del payload; el formulario dinámico solo muestra los controles
-  y emite los valores.
-- La página `/profiles` ya consulta usuarios mediante `UserService`; cualquier
-  cambio a `User` debe conservar esa compatibilidad o actualizar sus usos.
-- No se encontraron modelos ni servicios frontend para `Session` o `UserRole`.
-  El modelo y el CRUD de `Role` sí existen. No se debe inferir por esto cuál es
-  la relación real entre usuarios y roles en el backend.
-- Los formularios actuales de inicio de sesión y registro son pantallas de
-  plantilla: no implementan autenticación con el backend.
-
-## Contrato que se debe acordar en el backend
-
-Antes de conectar operaciones de escritura, publicar o compartir una
-especificación OpenAPI/Swagger (o documentación equivalente) que defina:
+Backend local: `http://localhost:8181`. El frontend ya usa esa dirección en
+`src/environment/environment.ts`.
 
 ### Usuarios
 
-- Rutas HTTP exactas para listar, consultar por ID, crear, actualizar y
-  eliminar.
-- Si el campo de correo se llama `mail` o `email`, y los formatos y límites
-  aceptados para cada campo.
-- DTO de request y response por operación, incluidos campos obligatorios,
-  opcionales, de solo lectura y la estructura de errores.
-- Si la creación de usuario incluye contraseña y cómo se realiza un cambio
-  posterior. Aclarar si omitir el campo durante una actualización conserva la
-  contraseña actual.
-- Si las respuestas de lectura excluyen siempre la contraseña y cualquier otro
-  dato sensible.
-- Comportamiento ante identificadores inexistentes, correos duplicados,
-  entradas inválidas y restricciones de integridad.
-- Si el listado es una matriz directa o un objeto paginado y qué parámetros
-  de búsqueda, ordenamiento o paginación acepta.
+El recurso es `/api/users`. Los responses de lectura descritos contienen
+`id`, `name` y `email`, y no incluyen contraseña.
 
-### Roles y relaciones
+| Método | Ruta | Payload / resultado descrito |
+|---|---|---|
+| `GET` | `/api/users` | Lista directa de usuarios. |
+| `GET` | `/api/users/{id}` | Un usuario. |
+| `POST` | `/api/users` | Recibe `name`, `email`, `password`; devuelve el usuario creado (`201`). |
+| `PUT` | `/api/users/{id}` | Recibe `name`, `email` y `password` opcional; devuelve el usuario actualizado. |
+| `DELETE` | `/api/users/{id}` | Elimina al usuario (`204`, sin cuerpo). |
 
-- Confirmar si la relación usuario-rol se administra como parte del DTO de
-  usuario o mediante rutas separadas.
-- Documentar el formato y las rutas para asignar y retirar roles, y quién puede
-  realizar esas operaciones.
-- Confirmar el esquema real de `UserRole`, sus restricciones y las reglas para
-  eliminar un usuario o un rol que tenga relaciones.
-- No duplicar `Role`: el frontend ya tiene `Role` y operaciones CRUD en
-  `src/app/models/role.model.ts` y `src/app/services/role.service.ts`.
+Validaciones descritas:
 
-### Sesiones y autenticación
+- `name`: obligatorio, 2–100 caracteres.
+- `email`: obligatorio, formato de correo válido. El nombre del campo es
+  `email`, no `mail`.
+- Al crear, `password` es obligatorio, de 8–72 caracteres, con mayúscula,
+  minúscula, número y al menos uno de `@$!%*?&`; no admite espacios.
+- Al actualizar, `password` es opcional. Si se omite o llega en blanco, se
+  conserva la contraseña existente; si se envía, debe satisfacer la misma
+  política.
+- Correo duplicado: `409`; ID inexistente: `404`; errores de validación: `400`.
+- El backend codifica/hash la contraseña. No forma parte de las respuestas
+  normales de usuario.
 
-- Documentar cómo se inicia sesión, renueva y termina una sesión, y cómo se
-  transportan las credenciales de autenticación.
-- Definir formato, vencimiento y revocación de tokens, y el flujo 2FA si aplica.
-- Definir qué rutas requieren autorización y los permisos necesarios por
-  operación; el backend debe hacer cumplir los permisos aunque el frontend
-  oculte botones.
-- No exponer tokens, códigos 2FA ni contraseñas en endpoints de lectura ni en
-  registros de aplicación. La gestión de sesiones no forma parte del modelo
-  actual del frontend.
+### Roles y asignaciones
 
-### Operación y despliegue
+El CRUD de roles está descrito en `/api/roles` (`GET` lista y consulta,
+`POST` crea, `PUT` actualiza, `DELETE` elimina). El modelo y servicio de roles
+ya existen en el frontend: `src/app/models/role.model.ts` y
+`src/app/services/role.service.ts`.
 
-- Definir URL y puerto locales, URL de cada entorno y uso de HTTPS fuera del
-  desarrollo local.
-- Configurar CORS en el backend para los orígenes del frontend. CORS no es una
-  medida de autenticación o autorización.
-- Documentar los códigos HTTP y el formato del cuerpo para errores, incluidos
-  errores de validación y autorización.
-- Indicar requisitos de infraestructura, variables de entorno, migraciones de
-  base de datos y datos semilla necesarios para probar la API.
+La relación usuario-rol se describe como recurso aparte en `/api/user-roles`:
 
-## Cambios previstos en el frontend
+| Método | Ruta | Operación |
+|---|---|---|
+| `POST` | `/api/user-roles` | Asigna con `{ "userId": number, "roleId": number }`. |
+| `GET` | `/api/user-roles` | Lista asignaciones. |
+| `GET` | `/api/user-roles/users/{userId}` | Lista asignaciones/roles de un usuario. |
+| `GET` | `/api/user-roles/roles/{roleId}` | Lista asignaciones/usuarios de un rol. |
+| `DELETE` | `/api/user-roles/{userId}/{roleId}` | Retira la asignación. |
 
-Los siguientes cambios se deben hacer después de confirmar el contrato; los
-nombres y formas de payload que se muestran aquí son ubicaciones de trabajo,
-no decisiones sobre la API.
+Una asignación duplicada produce `409`; IDs no encontrados producen `404`.
+No se integró la asignación de roles al formulario CRUD de usuario: falta
+confirmar qué perfiles pueden administrar asignaciones y cómo debe mostrarse
+esa función en la interfaz. También deben probarse las restricciones de
+integridad al borrar roles o usuarios relacionados.
 
-1. **Entorno:** ajustar `src/environment/environment.ts` para que `apiUrl`
-   apunte al servidor real. Si se incorporan más entornos, mantener sus valores
-   en configuraciones de entorno y no incrustar URLs en los componentes.
-2. **Modelo y DTO:** revisar `src/app/models/user.model.ts` según la respuesta
-   segura de lectura; crear DTO de request separados en
-   `src/app/models/dtos/` si create/update tienen payloads diferentes.
-   No añadir contraseñas a un modelo usado para listar o visualizar usuarios.
-3. **Servicio:** ampliar `src/app/services/user.service.ts` con las operaciones
-   HTTP que el contrato confirme. Mantener las rutas y tipos de respuesta
-   centralizados en el servicio, siguiendo el patrón de `RoleService`.
-4. **Página CRUD:** crear una página de usuarios siguiendo
-   `src/app/pages/roles/roles.component.ts` y su plantilla. Reutilizar
-   `DataTableComponent`, `DynamicFormComponent`, `ConfirmDialogComponent` y
-   `FeedbackHandlerService`; no duplicar la lógica visual de tabla, formulario
-   o confirmación.
-5. **Formulario dinámico:** usar los controles existentes donde sean
-   suficientes. Si el formulario de usuario requiere controles `email` o
-   `password`, ampliar `FormFieldType` y la plantilla de
-   `src/app/components/dynamic-form/` de forma reutilizable y compatible con
-   las páginas existentes. La validación debe definirse en el `FormGroup` de la
-   página y corresponder a las reglas del backend.
-6. **Contraseña:** mostrar un campo de contraseña solo en el flujo y con la
-   semántica acordados con el backend. No rellenarlo con una contraseña
-   existente, ni mostrarla, devolverla en listados, registrarla en consola o
-   almacenarla en el navegador. Enviar la contraseña únicamente por HTTPS en
-   el flujo autorizado por el backend; el hash y la política de contraseñas
-   pertenecen al backend.
-7. **Relaciones:** añadir selección/visualización de roles solo cuando estén
-   documentados el DTO o los endpoints para asignarlos. No incluir sesiones,
-   tokens o códigos 2FA en formularios o tablas administrativas de usuario.
-8. **Rutas y navegación:** añadir la ruta de usuarios a
-   `src/app/app.routes.ts` y, si debe aparecer en el menú, actualizar
-   `src/app/layouts/full/sidebar/sidebar-data.ts`.
-9. **Errores y carga:** conservar el patrón de `finalize` y notificaciones
-   visible en las páginas de roles/perfiles; mapear conflictos, validaciones,
-   falta de autenticación y falta de permisos según los errores reales de la
-   API. No convertir fallos de red en respuestas exitosas vacías.
-10. **Autenticación:** implementar el mecanismo de autenticación solo cuando
-    el backend haya definido el flujo. Si requiere añadir un interceptor o
-    guards, hacerlo siguiendo el esquema acordado y sin asumir que la
-    autorización del frontend protege los endpoints.
+### Autenticación, JWT y sesiones
 
-## Secuencia de integración y comprobación
+El resumen recibido describe:
 
-1. Arrancar el backend y comprobar su documentación OpenAPI/Swagger y sus
-   health checks, si los tiene.
-2. Probar cada operación y sus errores con datos no sensibles, por ejemplo
-   desde Swagger o una herramienta HTTP.
-3. Configurar `apiUrl` y verificar CORS desde el origen local del frontend.
-4. Implementar modelos/DTO y el servicio con el contrato confirmado.
-5. Conectar la página reutilizando el CRUD de roles y el formulario dinámico.
-6. Ejecutar `npm run build` y `npm test` (el test utiliza Karma y puede
-   requerir un navegador disponible).
-7. Probar manualmente listado, detalle, alta, edición, eliminación, validación,
-   carga, errores y reglas de acceso. Confirmar en las respuestas y en la
-   interfaz que contraseñas, tokens y códigos 2FA no se exponen.
-8. Validar autorización y reglas de integridad en el backend; no se pueden
-   demostrar solo con pruebas del frontend.
+- `POST /api/auth/login`, request `{ "email": "...", "password": "..." }`.
+- Respuesta con `accessToken`, `tokenType` (`Bearer`) y `expiresAt`.
+- JWT con duración de 15 minutos. El login es público y las demás rutas
+  requieren `Authorization: Bearer <accessToken>`.
+- No se encontraron rutas de renovación ni cierre/revocación de JWT, ni flujo
+  2FA. No se observaron reglas de autorización por rol/permiso, solo requisito
+  de autenticación.
 
-La interfaz CRUD inicial existe, pero la persistencia de crear, actualizar y
-eliminar usuarios no está implementada. Se necesita el contrato de la API antes
-de añadir operaciones de escritura o decidir cómo se representan las
-relaciones y credenciales.
+Se reportaron además recursos de sesiones de aplicación:
+`/api/users/{userId}/sessions`, además de endpoints de detalle
+`/api/users/{id}/detail`, `/detail-with-sessions` y `/detail-with-roles`.
+Estas sesiones de aplicación **no deben asumirse equivalentes a la sesión JWT
+de autenticación**. No se ha integrado un modelo o pantalla de sesiones en
+Angular. Antes de hacerlo, revisar el DTO y asegurar que no se expongan token,
+`code2FA` u otras credenciales en listados/detalles. El requisito original
+menciona `code2FA`, pero el backend compartido no reporta un flujo 2FA; confirmar
+si es un requisito o eliminarlo del alcance.
+
+El frontend aún no implementa autenticación real: los formularios de login y
+registro son pantallas de plantilla. Las operaciones protegidas de usuario
+pueden recibir `401` hasta conectar login y el envío del Bearer token. La
+autenticación requerida no sustituye autorización: si solo administradores
+deben modificar usuarios o asignar roles, el backend debe comprobar sus
+permisos. Ocultar botones en Angular no protege la API.
+
+## Estado de la implementación Angular
+
+- Aplicación standalone; rutas principales en `src/app/app.routes.ts`.
+- `src/app/app.config.ts` provee `HttpClient` y el router.
+- `src/app/services/user.service.ts` usa `${environment.apiUrl}/api/users` y
+  contiene los métodos `findAll`, `findById`, `create`, `update` y `delete`
+  según las rutas descritas arriba.
+- `src/app/models/user.model.ts` es el modelo de lectura (`id`, `name`,
+  `email`). No incluye contraseña.
+- Los DTO de escritura se separan en
+  `src/app/models/dtos/create-user.dto.ts` y
+  `src/app/models/dtos/update-user.dto.ts`. La contraseña solo está en esos
+  payloads de request.
+- La página `/users` está en `src/app/pages/users/` y reutiliza
+  `DataTableComponent`, `DynamicFormComponent`, `ConfirmDialogComponent`,
+  `UserService` y `FeedbackHandlerService`.
+- La contraseña de edición se presenta como campo vacío y opcional. Si queda
+  vacía, el frontend omite la propiedad del request `PUT`; nunca la obtiene de
+  una respuesta ni la precarga. Al crear sí es obligatoria.
+- `DynamicFormComponent` renderiza los controles configurados mediante
+  `FormFieldConfig`; el componente de página conserva la responsabilidad por
+  el `FormGroup`, validación, construcción del DTO, estados HTTP y mensajes.
+- El frontend valida nombre (2–100), formato de correo y contraseña (8–72,
+  mayúscula, minúscula, número, carácter especial requerido, sin espacios).
+  El backend debe repetir y hacer cumplir las validaciones.
+- No hay aún modelos/servicios frontend para asignaciones `UserRole` o sesiones
+  de aplicación. No se envían roles en el DTO de usuario.
+
+## Seguridad y aspectos que requieren confirmación
+
+1. **HTTPS:** el endpoint local compartido es HTTP. Es adecuado únicamente para
+   desarrollo local. Usar HTTPS en entornos accesibles por red y producción.
+   No enviar contraseñas a través de conexiones HTTP no confiables.
+2. **CORS:** el resumen indicó que no se encontró configuración explícita.
+   Configurar el origen exacto del servidor de desarrollo frontend en backend;
+   CORS no reemplaza autenticación/autorización.
+3. **Autorización:** confirmar y aplicar permisos por operación en backend,
+   en especial CRUD de usuarios, asignación de roles y administración de
+   sesiones.
+4. **JWT:** decidir cómo se tratará el vencimiento de 15 minutos y si se
+   requiere refresh/revocación/logout. No se debe afirmar que logout invalida
+   un JWT si el backend no ofrece esa capacidad.
+5. **Sesiones de aplicación:** verificar qué datos retornan los endpoints
+   `/sessions` y `detail-with-sessions`; no mostrar ni registrar tokens o
+   códigos 2FA. Aclarar el flujo de 2FA antes de implementar cualquier UI.
+6. **Borrado e integridad:** probar qué ocurre al borrar usuarios con perfiles,
+   asignaciones o sesiones, y roles con asignaciones.
+7. **Errores:** el resumen indica `400`, `404`, `409` y `500`; confirmar formato
+   de response y probar los cuerpos de `401`/`403` emitidos por Spring Security.
+8. **Documentación:** no se reportó dependencia Swagger/OpenAPI. Publicar una
+   especificación facilita mantener frontend y backend alineados.
+9. **Configuración sensible:** no copiar secretos, claves JWT, credenciales de
+   base de datos ni tokens al frontend o a este documento.
+
+## Cómo verificar la integración
+
+1. Arrancar backend y base de datos; comprobar que la API está disponible en
+   `http://localhost:8181`.
+2. Probar login, listado, detalle, alta, actualización (con y sin contraseña),
+   borrado, conflictos, validaciones y autorización con datos de prueba.
+3. Confirmar que los responses de usuario no incluyen contraseña y revisar los
+   DTO de sesiones/detalles antes de mostrarlos.
+4. Verificar CORS desde el origen real del frontend.
+5. En la carpeta del frontend, ejecutar `npm run build` y `npm test`.
+6. Probar `/users` con backend activo: listado, detalle, create, update,
+   confirmación y delete; verificar que al editar sin contraseña se omite ese
+   campo del request.
+7. Validar JWT y permisos también directamente en el backend/API. La UI Angular
+   por sí sola no prueba controles de acceso.
+
+Las operaciones CRUD del frontend ya están conectadas al contrato informado,
+pero su funcionamiento integral requiere backend activo, CORS habilitado y un
+flujo de autenticación que suministre Bearer token. La autenticación, la
+autorización por rol, la renovación/revocación de JWT y la administración de
+sesiones siguen fuera de lo implementado y requieren decisiones/pruebas del
+lado backend.
