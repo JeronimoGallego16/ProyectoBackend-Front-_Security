@@ -35,4 +35,12 @@
       (customAction)="onCustomAction($event)"
     ></app-data-table>
   }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    title="Delete role"
+    [message]="pendingDeleteRole ? 'Are you sure you want to delete the role #' + pendingDeleteRole.id + ' - ' + pendingDeleteRole.name + '?' : 'Are you sure?'"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-dialog>
 </div>
