@@ -6,11 +6,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-<<<<<<< HEAD
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-=======
->>>>>>> ca727354361526affd72c418d856e34a6a52c00d
 import { finalize } from 'rxjs';
 import {
   DataTableComponent,
@@ -86,7 +83,6 @@ export class RolesComponent implements OnInit {
   private editingRoleId: number | null = null;
   public pendingDeleteRole: Role | null = null;
 
-<<<<<<< HEAD
   /**
    * Creates an instance of the roles page.
    *
@@ -95,17 +91,14 @@ export class RolesComponent implements OnInit {
    * @param snackBar - Angular Material service used to show user feedback.
    * @param router - Angular router service for navigation.
    */
+
+    
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly roleService: RoleService,
+    private readonly feedbackHandlerService: FeedbackHandlerService,
     private readonly snackBar: MatSnackBar,
     private readonly router: Router
-=======
-  constructor(
-    private readonly formBuilder: FormBuilder,
-    private readonly roleService: RoleService,
-    private readonly feedbackHandlerService: FeedbackHandlerService
->>>>>>> ca727354361526affd72c418d856e34a6a52c00d
   ) {
     this.roleForm = this.formBuilder.group({
       name: ['', [Validators.required]],
@@ -178,7 +171,6 @@ export class RolesComponent implements OnInit {
       });
   }
 
-<<<<<<< HEAD
   /**
    * Handles custom action events emitted by the generic data table.
    *
@@ -200,14 +192,12 @@ export class RolesComponent implements OnInit {
    * Handles form submission, creating or updating a role depending on the
    * current mode.
    */
-=======
   public onCancelDelete(): void {
     this.confirmDeleteOpen = false;
     this.pendingDeleteRole = null;
     this.feedbackHandlerService.info(FeedbackCase.CANCELLED, 'Deletion cancelled.');
   }
 
->>>>>>> ca727354361526affd72c418d856e34a6a52c00d
   public onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
