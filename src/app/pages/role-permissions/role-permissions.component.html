@@ -1,44 +1,75 @@
 <div class="p-6">
-  <div class="flex items-center justify-between mb-4">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-800">Role Permissions</h1>
-      @if (roleName) {
-        <p class="text-gray-600">Role: {{ roleName }}</p>
-      }
-    </div>
-    <button mat-stroked-button type="button" (click)="onGoBack()">
-      <mat-icon>arrow_back</mat-icon>
-      Back to roles
-    </button>
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Role Permissions</h1>
   </div>
 
-  @if (isLoading) {
-    <div class="flex justify-center py-6">
-      <mat-spinner diameter="40"></mat-spinner>
+  <div class="grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <div class="border rounded-lg overflow-hidden">
+        <div class="bg-gray-50 px-4 py-3 border-b">
+          <h2 class="text-sm font-semibold text-gray-700">Roles</h2>
+        </div>
+        <div class="max-h-[600px] overflow-y-auto">
+          @for (role of roles; track role.id) {
+            <button
+              type="button"
+              class="w-full text-left px-4 py-2 border-b hover:bg-gray-50 transition-colors"
+              [class.bg-blue-50]="roleId === role.id"
+              (click)="onRoleSelect(role)"
+            >
+              <div class="font-medium text-gray-800">{{ role.name }}</div>
+              <div class="text-xs text-gray-500 truncate">{{ role.description }}</div>
+            </button>
+          }
+          @if (roles.length === 0) {
+            <div class="px-4 py-6 text-center text-gray-400 text-sm">No roles available</div>
+          }
+        </div>
+      </div>
     </div>
-  } @else {
-    <app-selectable-table
-      [data]="permissions"
-      [columns]="columns"
-      [initialSelectedIds]="assignedPermissionIds"
-      (selectionChange)="onSelectionChange($event)"
-    ></app-selectable-table>
 
-    <div class="flex justify-end mt-4">
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        [disabled]="isSaving"
-        (click)="onAssignPermissions()"
-      >
-        @if (isSaving) {
-          <mat-spinner diameter="20"></mat-spinner>
-        } @else {
-          <mat-icon>save</mat-icon>
-        }
-        Save permissions
-      </button>
+    <div class="col-span-12 md:col-span-9">
+      @if (roleName) {
+        <div class="mb-3">
+          <h2 class="text-lg font-semibold text-gray-800">{{ roleName }}</h2>
+          @if (roleDescription) {
+            <p class="text-gray-600 text-sm">{{ roleDescription }}</p>
+          }
+        </div>
+      } @else {
+        <div class="mb-3 text-gray-500">Select a role from the list to manage permissions.</div>
+      }
+
+      @if (isLoading) {
+        <div class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (roleId) {
+        <app-selectable-table
+          [matrixColumns]="matrixColumns"
+          [matrixRows]="matrixRows"
+          matrixColumnIdField="action"
+          [initialSelectedMatrixCells]="initialSelectedMatrixCells"
+          (matrixSelectionChange)="onMatrixSelectionChange($event)"
+        ></app-selectable-table>
+
+        <div class="flex justify-end mt-4">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="isSaving"
+            (click)="onAssignPermissions()"
+          >
+            @if (isSaving) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>save</mat-icon>
+            }
+            Save permissions
+          </button>
+        </div>
+      }
     </div>
-  }
+  </div>
 </div>
