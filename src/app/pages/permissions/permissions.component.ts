@@ -17,6 +17,7 @@ import {
   FormFieldConfig,
 } from 'src/app/components/dynamic-form/dynamic-form.component';
 import { MaterialModule } from 'src/app/material.module';
+import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import { PermissionRequestDTO } from 'src/app/models/dtos/permission-request.dto';
 import { Permission } from 'src/app/models/permission.model';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -39,6 +40,7 @@ import { FeedbackCase } from 'src/app/models/feedback-case';
     DataTableComponent,
     DynamicFormComponent,
     ConfirmDialogComponent,
+    DetailDialogComponent,
   ],
   templateUrl: './permissions.component.html',
   styleUrls: ['./permissions.component.scss'],
@@ -85,6 +87,14 @@ export class PermissionsComponent implements OnInit {
   public isLoading = false; // Flag that indicates whether an HTTP operation is currently running.
   public confirmDeleteOpen = false;
   public pendingDeletePermission: Permission | null = null;
+  public detailOpen = false;
+  public selectedPermission: Permission | null = null;
+  public detailFields = [
+    { key: 'id', label: 'ID' },
+    { key: 'url', label: 'URL' },
+    { key: 'method', label: 'Method' },
+    { key: 'entity', label: 'Entity' },
+  ];
   private editingPermissionId: number | null = null;
 
   /**
@@ -155,15 +165,18 @@ export class PermissionsComponent implements OnInit {
   }
 
   /**
-   * Displays the details of the selected permission through a notification.
+   * Opens the detail dialog with the selected permission information.
    *
    * @param permission - Permission selected from the table.
    */
   public onView(permission: Permission): void {
-    this.feedbackHandlerService.info(
-      FeedbackCase.OK,
-      `Permission #${permission.id}: ${permission.method} ${permission.url}`
-    );
+    this.selectedPermission = permission;
+    this.detailOpen = true;
+  }
+
+  public onCloseDetail(): void {
+    this.detailOpen = false;
+    this.selectedPermission = null;
   }
 
   /**
