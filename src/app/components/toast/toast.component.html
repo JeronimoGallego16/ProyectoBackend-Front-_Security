@@ -1,0 +1,32 @@
+<div [class]="cardClasses()" role="alert" aria-live="assertive" style="color:#111827;">
+  <div [class]="iconBadgeClasses()">
+    <mat-icon class="text-base leading-none" [class]="iconColorClass()">{{ iconName() }}</mat-icon>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    @if (toast.code) {
+      <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+        {{ toast.code }}
+      </p>
+    }
+    @if (toast.title) {
+      <p class="text-sm font-semibold leading-tight text-black">
+        {{ toast.title }}
+      </p>
+    }
+    <p class="text-sm leading-snug text-black">
+      {{ toast.message }}
+    </p>
+  </div>
+
+  @if (toast.dismissible) {
+    <button
+      type="button"
+      class="shrink-0 rounded p-1 text-black transition hover:bg-black/5 hover:text-black dark:hover:bg-white/10"
+      (click)="dismiss()"
+      aria-label="Dismiss notification"
+    >
+      <mat-icon class="text-base leading-none">close</mat-icon>
+    </button>
+  }
+</div>

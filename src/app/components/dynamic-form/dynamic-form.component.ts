@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from 'src/app/material.module';
+import { provideNativeDateAdapter } from '@angular/material/core';
 
 /**
  * Supported visual controls rendered by the generic form component.
@@ -28,6 +29,7 @@ export interface FormFieldConfig {
   selector: 'app-dynamic-form',
   standalone: true,
   imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './dynamic-form.component.html',
 })
 export class DynamicFormComponent {

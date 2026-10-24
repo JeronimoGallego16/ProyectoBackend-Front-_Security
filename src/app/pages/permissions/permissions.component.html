@@ -33,4 +33,12 @@
       (delete)="onDelete($event)"
     ></app-data-table>
   }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    title="Delete permission"
+    [message]="pendingDeletePermission ? 'Are you sure you want to delete the permission #' + pendingDeletePermission.id + ' - ' + pendingDeletePermission.method + ' ' + pendingDeletePermission.url + '?' : 'Are you sure?'"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-dialog>
 </div>
