@@ -21,12 +21,13 @@ describe('SelectableTableComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should select and clear all rows', () => {
-    component.data = [{ id: 1 }, { id: 2 }];
-    component.toggleAll(true);
-    expect(component.getSelectedItems().length).toBe(2);
+  it('should select and clear matrix cells', () => {
+    component.matrixRows = [{ entity: 'users' }];
+    component.matrixColumns = [{ id: 1 }];
+    component.toggleMatrixCell(component.matrixRows[0], component.matrixColumns[0], true);
+    expect(component.isMatrixCellSelected(component.matrixRows[0], component.matrixColumns[0])).toBeTrue();
 
     component.clearSelection();
-    expect(component.getSelectedItems().length).toBe(0);
+    expect(component.isMatrixCellSelected(component.matrixRows[0], component.matrixColumns[0])).toBeFalse();
   });
 });
