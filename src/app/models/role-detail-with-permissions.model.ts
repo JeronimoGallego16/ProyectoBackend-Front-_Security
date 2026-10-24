@@ -1,4 +1,5 @@
 import { Role } from './role.model';
+import { Permission } from './permission.model';
 
 /**
  * Represents a permission entry included in the role details response that
@@ -7,11 +8,7 @@ import { Role } from './role.model';
 export interface RolePermissionDetail {
   id: number;
   roleId: number;
-  permission: {
-    id: number;
-    url: string;
-    method: string;
-  };
+  permission: Permission;
 }
 
 /**
