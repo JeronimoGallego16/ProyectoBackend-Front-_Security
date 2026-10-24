@@ -18,17 +18,14 @@ import {
   DynamicFormComponent,
   FormFieldConfig,
 } from 'src/app/components/dynamic-form/dynamic-form.component';
+import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
 import { RoleService } from 'src/app/services/role.service';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { FeedbackCase } from 'src/app/models/feedback-case';
 
-/**
- * Presentation layer page that orchestrates the full CRUD lifecycle of the
- * security `Role` entity. It delegates every backend interaction to the
- * {@link RoleService} and renders the collection through the generic
- * {@link DataTableComponent}.
- */
 @Component({
   selector: 'app-roles',
   standalone: true,
@@ -38,14 +35,12 @@ import { RoleService } from 'src/app/services/role.service';
     ReactiveFormsModule,
     DataTableComponent,
     DynamicFormComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
 })
 export class RolesComponent implements OnInit {
-  /**
-   * Column definition consumed by the generic data table.
-   */
   public columns: TableColumn[] = [
     { field: 'id', header: 'ID' },
     { field: 'name', header: 'Name' },
@@ -73,11 +68,13 @@ export class RolesComponent implements OnInit {
   ];
 
   public roles: Role[] = [];
-  public roleForm: FormGroup; // Reactive form used to create and update roles.
-  public showForm = false; // Flag that controls whether the creation/edition form is visible.
-  public isEditing = false; // Flag that indicates whether an edition is in progress
-  public isLoading = false; // Flag that indicates whether an HTTP operation is currently running.
+  public roleForm: FormGroup;
+  public showForm = false;
+  public isEditing = false;
+  public isLoading = false;
+  public confirmDeleteOpen = false;
   private editingRoleId: number | null = null;
+  public pendingDeleteRole: Role | null = null;
 
   /**
    * Creates an instance of the roles page.
@@ -87,9 +84,12 @@ export class RolesComponent implements OnInit {
    * @param snackBar - Angular Material service used to show user feedback.
    * @param router - Angular router service for navigation.
    */
+
+    
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly roleService: RoleService,
+    private readonly feedbackHandlerService: FeedbackHandlerService,
     private readonly snackBar: MatSnackBar,
     private readonly router: Router
   ) {
@@ -99,16 +99,10 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  /**
-   * Lifecycle hook that loads the role collection on component initialization.
-   */
   public ngOnInit(): void {
     this.loadRoles();
   }
 
-  /**
-   * Fetches every role from the backend and refreshes the table data.
-   */
   public loadRoles(): void {
     this.isLoading = true;
     this.roleService
@@ -116,13 +110,11 @@ export class RolesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (roles: Role[]) => (this.roles = roles),
-        error: () => this.showMessage('Could not load roles. Please try again.'),
+        error: (error) =>
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not load roles. Please try again.'),
       });
   }
 
-  /**
-   * Opens the form in creation mode with an empty payload.
-   */
   public onCreateClick(): void {
     this.isEditing = false;
     this.editingRoleId = null;
@@ -130,11 +122,6 @@ export class RolesComponent implements OnInit {
     this.showForm = true;
   }
 
-  /**
-   * Opens the form in edition mode, preloading the selected role data.
-   *
-   * @param role - Role selected from the table.
-   */
   public onEdit(role: Role): void {
     this.isEditing = true;
     this.editingRoleId = role.id;
@@ -145,39 +132,35 @@ export class RolesComponent implements OnInit {
     this.showForm = true;
   }
 
-  /**
-   * Displays the details of the selected role through a notification.
-   *
-   * @param role - Role selected from the table.
-   */
   public onView(role: Role): void {
-    this.showMessage(`Role #${role.id}: ${role.name} - ${role.description}`);
+    this.feedbackHandlerService.info(FeedbackCase.OK, `Role #${role.id}: ${role.name} - ${role.description}`);
   }
 
-  /**
-   * Removes the selected role after user confirmation and refreshes the table.
-   *
-   * @param role - Role selected from the table.
-   */
   public onDelete(role: Role): void {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the role "${role.name}"?`
-    );
+    this.pendingDeleteRole = role;
+    this.confirmDeleteOpen = true;
+  }
 
-    if (!confirmed) {
-      return;
-    }
+  public onConfirmDelete(): void {
+    if (!this.pendingDeleteRole) return;
 
+    const role = this.pendingDeleteRole;
     this.isLoading = true;
     this.roleService
       .delete(role.id)
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
-          this.showMessage('Role deleted successfully.');
+          this.feedbackHandlerService.success(FeedbackCase.NO_CONTENT, 'Role deleted successfully.');
+          this.confirmDeleteOpen = false;
+          this.pendingDeleteRole = null;
           this.loadRoles();
         },
-        error: () => this.showMessage('Could not delete the role.'),
+        error: (error) => {
+          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the role.');
+          this.confirmDeleteOpen = false;
+          this.pendingDeleteRole = null;
+        },
       });
   }
 
@@ -195,38 +178,42 @@ export class RolesComponent implements OnInit {
    * Handles form submission, creating or updating a role depending on the
    * current mode.
    */
+  public onCancelDelete(): void {
+    this.confirmDeleteOpen = false;
+    this.pendingDeleteRole = null;
+    this.feedbackHandlerService.info(FeedbackCase.CANCELLED, 'Deletion cancelled.');
+  }
+
   public onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Please complete all required fields before saving.');
       return;
     }
 
     const payload: RoleRequestDTO = this.buildPayload();
     this.isLoading = true;
 
+    const wasEditing = this.isEditing;
     const request$ =
-      this.isEditing && this.editingRoleId !== null
+      wasEditing && this.editingRoleId !== null
         ? this.roleService.update(this.editingRoleId, payload)
         : this.roleService.create(payload);
 
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: () => {
-        this.showMessage(
-          this.isEditing
-            ? 'Role updated successfully.'
-            : 'Role created successfully.'
+        this.feedbackHandlerService.success(
+          wasEditing ? FeedbackCase.OK : FeedbackCase.CREATED,
+          wasEditing ? 'Role updated successfully.' : 'Role created successfully.'
         );
         this.cancelForm();
         this.loadRoles();
       },
-      error: () =>
-        this.showMessage('Could not save the role. Please verify the data.'),
+      error: (error) =>
+        this.feedbackHandlerService.error(String(error?.status ?? 500), 'Could not save the role. Please verify the data.'),
     });
   }
 
-  /**
-   * Closes the form and resets its state.
-   */
   public cancelForm(): void {
     this.showForm = false;
     this.isEditing = false;
@@ -234,28 +221,10 @@ export class RolesComponent implements OnInit {
     this.roleForm.reset({ name: '', description: '' });
   }
 
-  /**
-   * Builds the request payload from the current form values.
-   *
-   * @returns The DTO with the role data entered by the user.
-   */
   private buildPayload(): RoleRequestDTO {
     return {
       name: this.roleForm.value.name as string,
       description: this.roleForm.value.description as string,
     };
-  }
-
-  /**
-   * Shows a short notification message to the user.
-   *
-   * @param message - Text to display in the snack bar.
-   */
-  private showMessage(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-    });
   }
 }
