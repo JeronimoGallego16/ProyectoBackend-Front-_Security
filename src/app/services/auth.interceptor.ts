@@ -1,19 +1,34 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { AuthService } from './auth.service';
+import { CsrfService } from './csrf.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const token = inject(AuthService).getAccessToken();
   const isBackendApiRequest = request.url.startsWith(`${environment.apiUrl}/api/`);
 
-  if (!token || !isBackendApiRequest || request.url.endsWith('/api/auth/login')) {
+  if (!isBackendApiRequest) {
     return next(request);
   }
 
-  return next(
-    request.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    })
+  const requestWithCredentials = request.clone({ withCredentials: true });
+  const isMutatingRequest = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(
+    request.method.toUpperCase()
   );
+
+  if (!isMutatingRequest) {
+    return next(requestWithCredentials);
+  }
+
+  return inject(CsrfService)
+    .getToken()
+    .pipe(
+      switchMap((token) =>
+        next(
+          requestWithCredentials.clone({
+            setHeaders: { 'X-XSRF-TOKEN': token },
+          })
+        )
+      )
+    );
 };

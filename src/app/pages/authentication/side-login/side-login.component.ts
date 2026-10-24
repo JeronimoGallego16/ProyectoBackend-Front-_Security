@@ -21,6 +21,7 @@ import { AuthService } from 'src/app/services/auth.service';
 export class AppSideLoginComponent {
   public isLoading = false;
   public errorMessage = '';
+  public isPasswordVisible = false;
   public readonly form: FormGroup<{
     email: FormControl<string>;
     password: FormControl<string>;
@@ -57,5 +58,9 @@ export class AppSideLoginComponent {
               : 'No se pudo iniciar sesión. Verifica que el servicio esté disponible e inténtalo de nuevo.';
         },
       });
+  }
+
+  public togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 }

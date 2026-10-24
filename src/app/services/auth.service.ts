@@ -1,40 +1,27 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { AuthResponse } from '../models/auth-response.model';
+import { AuthSession } from '../models/auth-response.model';
 import { LoginRequestDTO } from '../models/dtos/login-request.dto';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly loginUrl = `${environment.apiUrl}/api/auth/login`;
-  private accessToken: string | null = null;
-  private tokenExpiresAt: number | null = null;
+  private readonly authUrl = `${environment.apiUrl}/api/auth`;
 
   constructor(private readonly http: HttpClient) {}
 
-  public login(credentials: LoginRequestDTO): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(this.loginUrl, credentials).pipe(
-      tap((response) => {
-        this.accessToken = response.accessToken;
-        this.tokenExpiresAt = Date.parse(response.expiresAt);
+  public login(credentials: LoginRequestDTO): Observable<AuthSession> {
+    return this.http
+      .post<void>(`${this.authUrl}/login`, credentials, {
+        withCredentials: true,
       })
-    );
+      .pipe(switchMap(() => this.getSession()));
   }
 
-  public getAccessToken(): string | null {
-    if (
-      this.tokenExpiresAt === null ||
-      !Number.isFinite(this.tokenExpiresAt) ||
-      Date.now() >= this.tokenExpiresAt
-    ) {
-      this.clearLocalSession();
-    }
-    return this.accessToken;
-  }
-
-  public clearLocalSession(): void {
-    this.accessToken = null;
-    this.tokenExpiresAt = null;
+  public getSession(): Observable<AuthSession> {
+    return this.http.get<AuthSession>(`${this.authUrl}/session`, {
+      withCredentials: true,
+    });
   }
 }

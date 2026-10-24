@@ -6,6 +6,37 @@ inspeccionó ni ejecutó el repositorio backend desde este workspace. Antes de
 considerarlos contrato definitivo, deben verificarse contra el código actual y
 probarse con el servicio en ejecución.
 
+## Contrato de autenticación actualizado: cookie HttpOnly
+
+Este apartado es la referencia vigente para autenticación y sustituye las
+referencias anteriores de esta guía a JWT devuelto como `Bearer` en JSON.
+El código del backend no está disponible en este workspace; los detalles a
+continuación reflejan el contrato y las clases que el usuario compartió.
+
+- `POST /api/auth/login` recibe `{ "email": "...", "password": "..." }`,
+  responde `204 No Content` y establece `AUTH_TOKEN` como cookie `HttpOnly`,
+  con `Path=/api`, `SameSite=Lax` y `Secure` según `COOKIE_SECURE`.
+- `GET /api/auth/session` requiere autenticación por cookie y responde
+  `{ "id": number, "name": string, "email": string }`. El frontend usa este
+  endpoint para confirmar que la sesión está activa; un `204` de login por sí
+  solo no se toma como prueba suficiente de sesión.
+- `GET /api/auth/csrf` inicializa CSRF y responde `{ "token": "..." }`, además
+  de establecer `XSRF-TOKEN` (no HttpOnly). Las mutaciones envían el valor del
+  cuerpo en `X-XSRF-TOKEN`. Como esta cookie está limitada a `Path=/api`, la
+  aplicación no depende de leerla desde su página: conserva el token recibido
+  en memoria.
+- Las solicitudes del frontend a `${environment.apiUrl}/api/` usan
+  `withCredentials: true`. Angular no lee ni guarda `AUTH_TOKEN`, y no envía
+  `Authorization: Bearer`.
+- El `SecurityConfig` compartido habilita CSRF, CORS con credenciales para el
+  origen exacto `http://localhost:4200` y Resource Server con
+  `CookieBearerTokenResolver`. El backend debe mantener esa lista de orígenes
+  sincronizada con el origen real del frontend.
+- La cookie de autenticación no debe ser accesible desde JavaScript. En local
+  HTTP, `Secure=false` permite la prueba; en HTTPS/producción debe ser `true`.
+  El frontend conserva las pantallas existentes de 2FA y recuperación, pero
+  no las conecta porque sus endpoints/contratos no se han definido.
+
 ## Resumen del contrato compartido
 
 Backend local: `http://localhost:8181`. El frontend ya usa esa dirección en
@@ -61,7 +92,7 @@ confirmar qué perfiles pueden administrar asignaciones y cómo debe mostrarse
 esa función en la interfaz. También deben probarse las restricciones de
 integridad al borrar roles o usuarios relacionados.
 
-### Autenticación, JWT y sesiones
+### Autenticación, JWT y sesiones (referencia histórica; ver contrato actualizado)
 
 El resumen recibido describe:
 
@@ -167,7 +198,7 @@ autorización por rol, la renovación/revocación de JWT y la administración de
 sesiones siguen fuera de lo implementado y requieren decisiones/pruebas del
 lado backend.
 
-## Estado actual de autenticación frontend
+## Estado actual de autenticación frontend (ver corrección vigente arriba)
 
 Esta sección actualiza cualquier referencia anterior que describa el login
 como una pantalla exclusivamente visual:

@@ -27,26 +27,45 @@ describe('AuthService', () => {
 
   afterEach(() => httpTestingController.verify());
 
-  it('posts login credentials and attaches the in-memory bearer token to API calls', () => {
+  it('logs in through CSRF and confirms the HttpOnly-cookie session without a bearer token', () => {
     const loginUrl = `${environment.apiUrl}/api/auth/login`;
-    service.login({ email: 'user@example.com', password: 'Passw0rd!' }).subscribe();
+    const csrfUrl = `${environment.apiUrl}/api/auth/csrf`;
+    const sessionUrl = `${environment.apiUrl}/api/auth/session`;
+    let session: unknown;
+
+    service
+      .login({ email: 'user@example.com', password: 'Passw0rd!' })
+      .subscribe((response) => (session = response));
+
+    const csrfRequest = httpTestingController.expectOne(csrfUrl);
+    expect(csrfRequest.request.method).toBe('GET');
+    expect(csrfRequest.request.withCredentials).toBeTrue();
+    csrfRequest.flush({ token: 'csrf-test-token' });
 
     const loginRequest = httpTestingController.expectOne(loginUrl);
     expect(loginRequest.request.method).toBe('POST');
+    expect(loginRequest.request.withCredentials).toBeTrue();
+    expect(loginRequest.request.headers.get('X-XSRF-TOKEN')).toBe('csrf-test-token');
+    expect(loginRequest.request.headers.has('Authorization')).toBeFalse();
     expect(loginRequest.request.body).toEqual({
       email: 'user@example.com',
       password: 'Passw0rd!',
     });
-    expect(loginRequest.request.headers.has('Authorization')).toBeFalse();
-    loginRequest.flush({
-      accessToken: 'test-token',
-      tokenType: 'Bearer',
-      expiresAt: '2099-01-01T00:00:00Z',
-    });
+    loginRequest.flush(null, { status: 204, statusText: 'No Content' });
 
-    httpClient.get(`${environment.apiUrl}/api/users`).subscribe();
+    const sessionRequest = httpTestingController.expectOne(sessionUrl);
+    expect(sessionRequest.request.method).toBe('GET');
+    expect(sessionRequest.request.withCredentials).toBeTrue();
+    expect(sessionRequest.request.headers.has('Authorization')).toBeFalse();
+    sessionRequest.flush({ id: 1, name: 'Test User', email: 'user@example.com' });
+
+    expect(session).toEqual({ id: 1, name: 'Test User', email: 'user@example.com' });
+
+    httpClient.post(`${environment.apiUrl}/api/users`, {}).subscribe();
     const apiRequest = httpTestingController.expectOne(`${environment.apiUrl}/api/users`);
-    expect(apiRequest.request.headers.get('Authorization')).toBe('Bearer test-token');
-    apiRequest.flush([]);
+    expect(apiRequest.request.withCredentials).toBeTrue();
+    expect(apiRequest.request.headers.get('X-XSRF-TOKEN')).toBe('csrf-test-token');
+    expect(apiRequest.request.headers.has('Authorization')).toBeFalse();
+    apiRequest.flush({});
   });
 });
