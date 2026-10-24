@@ -41,4 +41,12 @@
     (confirm)="onConfirmDelete()"
     (cancel)="onCancelDelete()"
   ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Permission details"
+    [data]="selectedPermission"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
 </div>
