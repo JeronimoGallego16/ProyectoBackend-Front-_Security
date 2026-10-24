@@ -1,13 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MaterialModule } from 'src/app/material.module';
-import { TableColumn } from '../table-list/table-list.component';
 
 /**
- * Reusable presentational table that renders a dynamic set of columns and
- * allows the user to select multiple rows through checkboxes. Instead of the
- * row action buttons used by the generic data table, this component exposes a
- * selection model through the {@link SelectableTableComponent.selectionChange}
- * event so the parent page can react to the chosen items.
+ * Reusable presentational matrix that renders selectable permissions as columns
+ * and entities/resources as rows.
  */
 @Component({
   selector: 'app-selectable-table',
@@ -18,125 +14,94 @@ import { TableColumn } from '../table-list/table-list.component';
 })
 export class SelectableTableComponent {
   /**
-   * Collection of rows to render in the table body.
+   * List of permissions represented as matrix columns.
    */
-  @Input() public data: any[] = [];
+  @Input() public matrixColumns: any[] = [];
 
   /**
-   * Column definitions describing which fields to display and their headers.
+   * List of entities/resources represented as matrix rows.
    */
-  @Input() public columns: TableColumn[] = [];
+  @Input() public matrixRows: any[] = [];
 
   /**
-   * Name of the property used to uniquely identify each row. Used to track the
-   * selection independently of the object reference.
+   * Property name used to identify a matrix column.
    */
-  @Input() public idField = 'id';
+  @Input() public matrixColumnIdField = 'id';
 
   /**
-   * Identifiers that must be marked as selected when the table is rendered.
-   * Assign a new array reference to force the selection to be recomputed.
-   *
-   * @param ids - Collection of row identifiers to preselect.
+   * Property name used to identify a matrix row.
+   */
+  @Input() public matrixRowIdField = 'entity';
+
+  /**
+   * Stores selected matrix cells as "rowKey|columnKey".
+   */
+  private readonly selectedMatrixCells = new Set<string>();
+
+  /**
+   * Preselected matrix cells in matrix mode.
    */
   @Input()
-  public set initialSelectedIds(ids: ReadonlyArray<unknown> | null) {
-    this.selectedIds.clear();
-    (ids ?? []).forEach((id) => this.selectedIds.add(id));
+  public set initialSelectedMatrixCells(cells: ReadonlyArray<string> | null) {
+    this.selectedMatrixCells.clear();
+    (cells ?? []).forEach((cell) => this.selectedMatrixCells.add(cell));
   }
 
   /**
-   * Emits the full list of selected rows every time the selection changes.
+   * Emits matrix selection changes as selected permission objects.
    */
-  @Output() public selectionChange = new EventEmitter<any[]>();
-
-  /**
-   * Identifiers of the currently selected rows.
-   */
-  private readonly selectedIds = new Set<unknown>();
-
-  /**
-   * Indicates whether the given row is part of the current selection.
-   *
-   * @param item - Row to evaluate.
-   * @returns `true` when the row is selected, otherwise `false`.
-   */
-  public isSelected(item: any): boolean {
-    return this.selectedIds.has(item[this.idField]);
-  }
-
-  /**
-   * Indicates whether every row in the table is currently selected.
-   *
-   * @returns `true` when all rows are selected and there is at least one row.
-   */
-  public isAllSelected(): boolean {
-    return this.data.length > 0 && this.selectedIds.size === this.data.length;
-  }
-
-  /**
-   * Indicates whether only a subset of the rows is selected.
-   *
-   * @returns `true` when at least one but not all rows are selected.
-   */
-  public isSomeSelected(): boolean {
-    return this.selectedIds.size > 0 && !this.isAllSelected();
-  }
-
-  /**
-   * Toggles the selection state of a single row.
-   *
-   * @param item - Row whose checkbox was toggled.
-   * @param checked - New checked state reported by the checkbox.
-   */
-  public toggleRow(item: any, checked: boolean): void {
-    const id = item[this.idField];
-
-    if (checked) {
-      this.selectedIds.add(id);
-    } else {
-      this.selectedIds.delete(id);
-    }
-
-    this.emitSelection();
-  }
-
-  /**
-   * Toggles the selection state of every row at once.
-   *
-   * @param checked - When `true` selects all rows, otherwise clears the selection.
-   */
-  public toggleAll(checked: boolean): void {
-    this.selectedIds.clear();
-
-    if (checked) {
-      this.data.forEach((item) => this.selectedIds.add(item[this.idField]));
-    }
-
-    this.emitSelection();
-  }
-
-  /**
-   * Returns the rows that are currently selected.
-   *
-   * @returns Array containing the selected rows.
-   */
-  public getSelectedItems(): any[] {
-    return this.data.filter((item) => this.selectedIds.has(item[this.idField]));
-  }
+  @Output() public matrixSelectionChange = new EventEmitter<any[]>();
 
   /**
    * Clears the current selection and notifies the parent component.
    */
   public clearSelection(): void {
-    this.selectedIds.clear();
-    this.emitSelection();
+    this.selectedMatrixCells.clear();
+    this.matrixSelectionChange.emit([]);
   }
 
   /**
-   * Emits the current selection to the parent component.
+   * Builds matrix cell key.
    */
-  private emitSelection(): void {
-    this.selectionChange.emit(this.getSelectedItems());
+  public getMatrixCellKey(row: any, column: any): string {
+    const rowKey = row[this.matrixRowIdField];
+    const columnKey = column[this.matrixColumnIdField];
+    return `${rowKey}|${columnKey}`;
+  }
+
+  /**
+   * Checks if matrix cell is selected.
+   */
+  public isMatrixCellSelected(row: any, column: any): boolean {
+    return this.selectedMatrixCells.has(this.getMatrixCellKey(row, column));
+  }
+
+  /**
+   * Toggles matrix cell selection.
+   */
+  public toggleMatrixCell(row: any, column: any, checked: boolean): void {
+    const key = this.getMatrixCellKey(row, column);
+    if (checked) {
+      this.selectedMatrixCells.add(key);
+    } else {
+      this.selectedMatrixCells.delete(key);
+    }
+    this.emitMatrixSelection();
+  }
+
+  /**
+   * Emits matrix selection.
+   */
+  private emitMatrixSelection(): void {
+    const selected: any[] = [];
+    this.selectedMatrixCells.forEach((key) => {
+      const [rowKey, columnKey] = key.split('|');
+      const row = this.matrixRows.find((r) => String(r[this.matrixRowIdField]) === rowKey);
+      const column = this.matrixColumns.find((c) => String(c[this.matrixColumnIdField]) === columnKey);
+      if (row && column) {
+        selected.push({ row, column, permission: column });
+      }
+    });
+    this.matrixSelectionChange.emit(selected);
   }
 }

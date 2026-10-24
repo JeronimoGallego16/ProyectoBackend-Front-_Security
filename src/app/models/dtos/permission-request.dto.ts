@@ -8,4 +8,5 @@
 export interface PermissionRequestDTO {
   url: string;
   method: string;
+  entity: string;
 }

@@ -55,14 +55,7 @@ export class RolesComponent implements OnInit {
   /**
    * Optional custom action buttons for the data table.
    */
-  public actions: TableAction[] = [
-    {
-      label: 'Assign Permissions',
-      icon: 'security',
-      color: 'primary',
-      visible: (row: Role) => row !== undefined,
-    },
-  ];
+  public actions: TableAction[] = [];
 
   public fields: FormFieldConfig[] = [
     {
@@ -196,13 +189,6 @@ export class RolesComponent implements OnInit {
   public onCustomAction(event: { action: string; row: any }): void {
     const action = event.action;
     const row = event.row as Role;
-
-    if (action === 'Assign Permissions') {
-      this.router.navigate(['/role-permissions'], {
-        queryParams: { roleId: row.id },
-      });
-      return;
-    }
   }
 
   /**

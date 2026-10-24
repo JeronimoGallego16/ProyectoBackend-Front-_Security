@@ -48,6 +48,7 @@ export class PermissionsComponent implements OnInit {
     { field: 'id', header: 'ID' },
     { field: 'url', header: 'URL' },
     { field: 'method', header: 'Method' },
+    { field: 'entity', header: 'Entity' },
   ];
 
   /**
@@ -65,6 +66,12 @@ export class PermissionsComponent implements OnInit {
       label: 'Method',
       type: 'text',
       placeholder: 'HTTP method, e.g. GET',
+    },
+    {
+      name: 'entity',
+      label: 'Entity',
+      type: 'text',
+      placeholder: 'Entity name',
     },
   ];
 
@@ -90,6 +97,7 @@ export class PermissionsComponent implements OnInit {
     this.permissionForm = this.formBuilder.group({
       url: ['', [Validators.required]],
       method: ['', [Validators.required]],
+      entity: ['', [Validators.required]],
     });
   }
 
@@ -121,7 +129,7 @@ export class PermissionsComponent implements OnInit {
   public onCreateClick(): void {
     this.isEditing = false;
     this.editingPermissionId = null;
-    this.permissionForm.reset({ url: '', method: '' });
+    this.permissionForm.reset({ url: '', method: '', entity: '' });
     this.showForm = true;
   }
 
@@ -136,6 +144,7 @@ export class PermissionsComponent implements OnInit {
     this.permissionForm.reset({
       url: permission.url,
       method: permission.method,
+      entity: permission.entity,
     });
     this.showForm = true;
   }
@@ -220,7 +229,7 @@ export class PermissionsComponent implements OnInit {
     this.showForm = false;
     this.isEditing = false;
     this.editingPermissionId = null;
-    this.permissionForm.reset({ url: '', method: '' });
+    this.permissionForm.reset({ url: '', method: '', entity: '' });
   }
 
   /**
@@ -232,6 +241,7 @@ export class PermissionsComponent implements OnInit {
     return {
       url: this.permissionForm.value.url as string,
       method: this.permissionForm.value.method as string,
+      entity: this.permissionForm.value.entity as string,
     };
   }
 
