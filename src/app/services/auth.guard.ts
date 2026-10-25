@@ -12,6 +12,7 @@ export const authGuard: CanActivateFn = () => {
     map(() => true),
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401) {
+        authService.clearLocalState();
         return of(router.createUrlTree(['/authentication/login']));
       }
       return throwError(() => error);

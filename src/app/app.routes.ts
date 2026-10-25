@@ -7,7 +7,7 @@ export const routes: Routes = [
   {
     path: '',
     component: FullComponent,
-    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       {
         path: '',

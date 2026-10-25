@@ -77,7 +77,15 @@
     </button>
 
     <div class="px-3 mt-3">
-      <a [routerLink]="['/authentication/login']" mat-stroked-button class="w-full">Logout</a>
+      <button
+        type="button"
+        mat-stroked-button
+        class="w-full"
+        [disabled]="isLoggingOut"
+        (click)="logout()"
+      >
+        {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+      </button>
     </div>
   </mat-menu>
 </mat-toolbar>

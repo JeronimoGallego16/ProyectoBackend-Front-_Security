@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   Output,
@@ -16,6 +17,11 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { AppSettings } from 'src/app/config';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { FeedbackCase } from 'src/app/models/feedback-case';
 
 interface notifications {
   id: number;
@@ -51,6 +57,7 @@ export class HeaderComponent {
   @Output() toggleCollapsed = new EventEmitter<void>();
 
   showFiller = false;
+  isLoggingOut = false;
 
   @Output() optionsChange = new EventEmitter<AppSettings>();
 
@@ -58,7 +65,10 @@ export class HeaderComponent {
     private settings: CoreService,
     private vsidenav: CoreService,
     public dialog: MatDialog,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly feedbackHandlerService: FeedbackHandlerService
   ) {
     translate.setDefaultLang('en');
   }
@@ -72,6 +82,27 @@ export class HeaderComponent {
   setlightDark(theme: string) {
     this.options.theme = theme;
     this.emitOptions();
+  }
+
+  logout(): void {
+    if (this.isLoggingOut) {
+      return;
+    }
+
+    this.isLoggingOut = true;
+    this.authService
+      .logout()
+      .pipe(finalize(() => (this.isLoggingOut = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/authentication/login']),
+        error: (error: unknown) =>
+          this.feedbackHandlerService.error(
+            error instanceof HttpErrorResponse
+              ? String(error.status || FeedbackCase.SERVER_ERROR)
+              : FeedbackCase.SERVER_ERROR,
+            'Could not log out. Please try again.'
+          ),
+      });
   }
 
   notifications: notifications[] = [

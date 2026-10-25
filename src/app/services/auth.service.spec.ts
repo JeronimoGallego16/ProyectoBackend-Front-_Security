@@ -68,4 +68,31 @@ describe('AuthService', () => {
     expect(apiRequest.request.headers.has('Authorization')).toBeFalse();
     apiRequest.flush({});
   });
+
+  it('logs out with CSRF and credentials, then clears the local session on 204', () => {
+    const csrfUrl = `${environment.apiUrl}/api/auth/csrf`;
+    const sessionUrl = `${environment.apiUrl}/api/auth/session`;
+    const logoutUrl = `${environment.apiUrl}/api/auth/logout`;
+    const session = { id: 1, name: 'Test User', email: 'user@example.com' };
+
+    service.getSession().subscribe();
+    httpTestingController.expectOne(sessionUrl).flush(session);
+    expect(service.getCurrentSession()).toEqual(session);
+
+    service.logout().subscribe();
+
+    const csrfRequest = httpTestingController.expectOne(csrfUrl);
+    expect(csrfRequest.request.method).toBe('GET');
+    expect(csrfRequest.request.withCredentials).toBeTrue();
+    csrfRequest.flush({ token: 'csrf-test-token' });
+
+    const logoutRequest = httpTestingController.expectOne(logoutUrl);
+    expect(logoutRequest.request.method).toBe('POST');
+    expect(logoutRequest.request.withCredentials).toBeTrue();
+    expect(logoutRequest.request.headers.get('X-XSRF-TOKEN')).toBe('csrf-test-token');
+    expect(logoutRequest.request.headers.has('Authorization')).toBeFalse();
+    logoutRequest.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(service.getCurrentSession()).toBeNull();
+  });
 });

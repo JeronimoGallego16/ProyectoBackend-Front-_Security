@@ -40,4 +40,8 @@ export class CsrfService {
 
     return this.csrfRequest;
   }
+
+  public clearToken(): void {
+    this.csrfToken = null;
+  }
 }
