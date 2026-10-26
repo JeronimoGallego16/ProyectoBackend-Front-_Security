@@ -44,6 +44,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding()
     ),
     provideHttpClient(withInterceptorsFromDi()),
+    provideAnimationsAsync(),
     provideFirebaseApp(() => initializeApp((environment as any).firebase)),
     provideAuth(() => getAuth()),
     importProvidersFrom(
