@@ -10,6 +10,11 @@ export const AuthenticationRoutes: Routes = [
     path: '',
     children: [
       {
+        path: '',
+        redirectTo: 'login',
+        pathMatch: 'full',
+      },
+      {
         path: 'login',
         component: AppSideLoginComponent,
       },

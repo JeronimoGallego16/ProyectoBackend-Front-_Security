@@ -1,0 +1,40 @@
+<div class="overflow-x-auto">
+  <table class="w-full border-collapse text-sm">
+    <thead>
+      <tr class="bg-gray-50 border-b">
+        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+          Entity
+        </th>
+        @for (col of matrixColumns; track col[matrixColumnIdField]) {
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {{ col.method || col.name || col.url || col.id }}
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of matrixRows; track row[matrixRowIdField]) {
+        <tr class="border-b hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-gray-700 font-medium sticky left-0 bg-white z-10">
+            {{ row[matrixRowIdField] }}
+          </td>
+          @for (col of matrixColumns; track col[matrixColumnIdField]) {
+            <td class="px-4 py-3 text-center">
+              <mat-checkbox
+                [checked]="isMatrixCellSelected(row, col)"
+                (change)="toggleMatrixCell(row, col, $event.checked)"
+              ></mat-checkbox>
+            </td>
+          }
+        </tr>
+      }
+      @if (matrixRows.length === 0 || matrixColumns.length === 0) {
+        <tr>
+          <td [attr.colspan]="matrixColumns.length + 1" class="px-4 py-8 text-center text-gray-400">
+            No hay datos disponibles
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

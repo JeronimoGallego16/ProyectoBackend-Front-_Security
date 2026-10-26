@@ -45,6 +45,18 @@
               >
                 <mat-icon>delete</mat-icon>
               </button>
+              @for (action of actions; track action.label) {
+                @if (!action.visible || action.visible(item)) {
+                  <button
+                    mat-icon-button
+                    [color]="action.color || 'primary'"
+                    [matTooltip]="action.label"
+                    (click)="customAction.emit({ action: action.label, row: item })"
+                  >
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                  </button>
+                }
+              }
             </div>
           </td>
         </tr>

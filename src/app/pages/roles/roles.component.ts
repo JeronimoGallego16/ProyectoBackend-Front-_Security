@@ -6,10 +6,13 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   DataTableComponent,
   TableColumn,
+  TableAction,
 } from 'src/app/components/table-list/table-list.component';
 import {
   DynamicFormComponent,
@@ -44,6 +47,11 @@ export class RolesComponent implements OnInit {
     { field: 'description', header: 'Description' },
   ];
 
+  /**
+   * Optional custom action buttons for the data table.
+   */
+  public actions: TableAction[] = [];
+
   public fields: FormFieldConfig[] = [
     {
       name: 'name',
@@ -68,10 +76,22 @@ export class RolesComponent implements OnInit {
   private editingRoleId: number | null = null;
   public pendingDeleteRole: Role | null = null;
 
+  /**
+   * Creates an instance of the roles page.
+   *
+   * @param formBuilder - Angular service used to build the reactive form.
+   * @param roleService - Service that provides role data access.
+   * @param snackBar - Angular Material service used to show user feedback.
+   * @param router - Angular router service for navigation.
+   */
+
+    
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly roleService: RoleService,
-    private readonly feedbackHandlerService: FeedbackHandlerService
+    private readonly feedbackHandlerService: FeedbackHandlerService,
+    private readonly snackBar: MatSnackBar,
+    private readonly router: Router
   ) {
     this.roleForm = this.formBuilder.group({
       name: ['', [Validators.required]],
@@ -144,6 +164,20 @@ export class RolesComponent implements OnInit {
       });
   }
 
+  /**
+   * Handles custom action events emitted by the generic data table.
+   *
+   * @param event - Event containing the action name and the selected row.
+   */
+  public onCustomAction(event: { action: string; row: any }): void {
+    const action = event.action;
+    const row = event.row as Role;
+  }
+
+  /**
+   * Handles form submission, creating or updating a role depending on the
+   * current mode.
+   */
   public onCancelDelete(): void {
     this.confirmDeleteOpen = false;
     this.pendingDeleteRole = null;
