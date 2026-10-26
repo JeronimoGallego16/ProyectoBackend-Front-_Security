@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { AppSideLoginComponent } from './pages/authentication/side-login/side-login.component';
+import { AppSideRegisterComponent } from './pages/authentication/side-register/side-register.component';
 
 export const routes: Routes = [
   {
@@ -9,7 +11,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: '/dashboard',
+        redirectTo: '/auth/login',
         pathMatch: 'full',
       },
       {
@@ -60,16 +62,22 @@ export const routes: Routes = [
     component: BlankComponent,
     children: [
       {
-        path: 'authentication',
-        loadChildren: () =>
-          import('./pages/authentication/authentication.routes').then(
-            (m) => m.AuthenticationRoutes
-          ),
+        path: 'auth',
+        children: [
+          {
+            path: 'login',
+            component: AppSideLoginComponent,
+          },
+          {
+            path: 'register',
+            component: AppSideRegisterComponent,
+          },
+        ],
       },
     ],
   },
   {
     path: '**',
-    redirectTo: 'authentication/error',
+    redirectTo: 'auth/login',
   },
 ];

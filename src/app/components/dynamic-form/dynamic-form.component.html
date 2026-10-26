@@ -16,14 +16,16 @@
               [placeholder]="field.placeholder ?? ''"
             ></textarea>
           } @else if (field.type === 'date') {
-            <input
-              matInput
-              [formControlName]="field.name"
-              [placeholder]="field.placeholder ?? ''"
-              [matDatepicker]="picker"
-            />
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
+            <ng-container>
+              <input
+                matInput
+                [formControlName]="field.name"
+                [placeholder]="field.placeholder ?? ''"
+                [matDatepicker]="picker"
+              />
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </ng-container>
           } @else {
             <input
               matInput

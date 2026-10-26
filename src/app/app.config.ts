@@ -1,4 +1,4 @@
-import {
+﻿import {
   ApplicationConfig,
   provideZoneChangeDetection,
   importProvidersFrom,
@@ -14,7 +14,6 @@ import {
   withInMemoryScrolling,
 } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideClientHydration } from '@angular/platform-browser';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
@@ -29,6 +28,10 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { MaterialModule } from './material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getAuth, provideAuth } from '@angular/fire/auth';
+import { environment } from '../environment/environment';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -41,8 +44,8 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding()
     ),
     provideHttpClient(withInterceptorsFromDi()),
-    provideClientHydration(),
-    provideAnimationsAsync(),
+    provideFirebaseApp(() => initializeApp((environment as any).firebase)),
+    provideAuth(() => getAuth()),
     importProvidersFrom(
       FormsModule,
       ReactiveFormsModule,
