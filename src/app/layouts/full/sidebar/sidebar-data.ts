@@ -14,6 +14,11 @@ export const navItems: NavItem[] = [
     iconName: 'solar:users-group-rounded-line-duotone',
     route: '/users',
   },
+  {
+    displayName: 'User roles',
+    iconName: 'solar:user-id-line-duotone',
+    route: '/user-roles',
+  },
 
   {
     navCap: 'Ui Components',

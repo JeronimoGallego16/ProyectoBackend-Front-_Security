@@ -51,6 +51,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'user-roles',
+        loadChildren: () =>
+          import('./pages/user-roles/user-roles.routes').then(
+            (m) => m.UserRolesRoutes
+          ),
+      },
+      {
         path: 'profiles',
         loadComponent: () =>
           import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
