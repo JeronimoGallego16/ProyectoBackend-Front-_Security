@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import {
@@ -41,7 +41,7 @@ interface ProfileTableRow {
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   public columns: TableColumn[] = [
     { field: 'id', header: 'Profile ID' },
     { field: 'userId', header: 'User ID' },
@@ -70,6 +70,9 @@ export class ProfileComponent implements OnInit {
   public isEditing = false;
   public isCreateFlow = false;
   public confirmDeleteOpen = false;
+  public selectedImage: File | null = null;
+  public imagePreviewUrl: string | null = null;
+  public imageError = '';
 
   public lookupForm: FormGroup;
   public profileForm: FormGroup;
@@ -92,6 +95,44 @@ export class ProfileComponent implements OnInit {
 
   public ngOnInit(): void {
     this.loadProfiles();
+  }
+
+  public ngOnDestroy(): void {
+    this.revokeImagePreview();
+  }
+
+  public onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.imageError = '';
+    this.revokeImagePreview();
+
+    if (!file) {
+      this.selectedImage = null;
+      this.imagePreviewUrl = null;
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      this.imageError = 'Only JPG, PNG, or WEBP images are allowed.';
+      input.value = '';
+      this.selectedImage = null;
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.imageError = 'The image must not exceed 5 MB.';
+      input.value = '';
+      this.selectedImage = null;
+      return;
+    }
+
+    this.selectedImage = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  public imageUrl(profile: Profile | null): string | null {
+    return this.profileService.resolveImageUrl(profile?.profileImageUrl);
   }
 
   public loadProfiles(): void {
@@ -179,6 +220,7 @@ export class ProfileComponent implements OnInit {
                 this.viewOnly = false;
                 this.showLookup = false;
                 this.showForm = true;
+                this.resetSelectedImage();
                 this.profileForm.reset({ phone: '', birthDate: null });
               } else {
                 this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not check the profile.');
@@ -190,7 +232,16 @@ export class ProfileComponent implements OnInit {
           this.onManageProfileById(userId, user.name);
         }
       },
-      error: (error) => this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.NOT_FOUND), 'User not found.'),
+      error: (error) => {
+        const status = error?.status;
+        const fallback = status === 404
+          ? `User #${userId} was not found in the backend.`
+          : 'Could not find the user. Verify your session and backend connection.';
+        this.feedbackHandlerService.error(
+          String(status ?? FeedbackCase.SERVER_ERROR),
+          this.backendErrorMessage(error, fallback)
+        );
+      },
     });
   }
 
@@ -242,6 +293,7 @@ export class ProfileComponent implements OnInit {
           phone: profile.phone,
           birthDate: profile.birthDate ? new Date(profile.birthDate + 'T00:00:00') : null,
         });
+        this.resetSelectedImage();
         this.showForm = true;
       },
       error: (error) => {
@@ -302,8 +354,8 @@ export class ProfileComponent implements OnInit {
     this.isLoading = true;
 
     const request$ = this.isEditing
-      ? this.profileService.update(this.selectedUserId, payload)
-      : this.profileService.create(this.selectedUserId, payload);
+      ? this.profileService.update(this.selectedUserId, payload, this.selectedImage ?? undefined)
+      : this.profileService.create(this.selectedUserId, payload, this.selectedImage ?? undefined);
 
     request$.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: (profile) => {
@@ -324,7 +376,10 @@ export class ProfileComponent implements OnInit {
         if (error?.status === 409) {
           this.feedbackHandlerService.warning(FeedbackCase.CONFLICT, 'This user already has a profile.');
         } else {
-          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not save the profile. Please verify the data.');
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            this.backendErrorMessage(error, 'Could not save the profile. Please verify the data.')
+          );
         }
       },
     });
@@ -353,7 +408,10 @@ export class ProfileComponent implements OnInit {
           this.clearSelection();
         },
         error: (error) => {
-          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the profile.');
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            this.backendErrorMessage(error, 'Could not delete the profile.')
+          );
           this.confirmDeleteOpen = false;
         },
       });
@@ -377,7 +435,21 @@ export class ProfileComponent implements OnInit {
     this.viewOnly = false;
     this.currentProfile = null;
     this.showForm = false;
+    this.resetSelectedImage();
     this.profileForm.reset({ phone: '', birthDate: null });
+  }
+
+  private resetSelectedImage(): void {
+    this.revokeImagePreview();
+    this.selectedImage = null;
+    this.imagePreviewUrl = null;
+    this.imageError = '';
+  }
+
+  private revokeImagePreview(): void {
+    if (this.imagePreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.imagePreviewUrl);
+    }
   }
 
   private buildPayload(): ProfileRequestDTO {
@@ -392,5 +464,12 @@ export class ProfileComponent implements OnInit {
             ).padStart(2, '0')}`
           : (birthDate as string),
     };
+  }
+
+  private backendErrorMessage(error: { error?: { message?: string } | string }, fallback: string): string {
+    const backendError = error?.error;
+    if (typeof backendError === 'string' && backendError.trim()) return backendError;
+    if (backendError && typeof backendError === 'object' && backendError.message) return backendError.message;
+    return fallback;
   }
 }

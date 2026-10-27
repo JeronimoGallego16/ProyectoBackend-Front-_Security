@@ -11,10 +11,10 @@ export class UserService {
   constructor(private readonly http: HttpClient) {}
 
   public findAll(): Observable<User[]> {
-    return this.http.get<User[]>(this.baseUrl);
+    return this.http.get<User[]>(this.baseUrl, { withCredentials: true });
   }
 
   public findById(id: number): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/${id}`);
+    return this.http.get<User>(`${this.baseUrl}/${id}`, { withCredentials: true });
   }
 }
