@@ -1,0 +1,113 @@
+{
+  "planHash": "4ebc74957b72d1a2c38927a442f61a39eff8c2e8cea51cf8252ff287a1af52e3",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-10-23T09:56:31.7988536Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 127134,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "angular-production-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E tailwindadmin@0.0.0 build\r\n\u003E ng build\r\n\r\n\u001B[33m\u003E\u001B[39m Building...\r\n\u001B[32m\u221A\u001B[39m Building...\r\n\u001B[1mInitial chunk files\u001B[22m  \u001B[2m | \u001B[22m\u001B[1mNames\u001B[22m                \u001B[2m | \u001B[22m \u001B[1mRaw size\u001B[22m\u001B[2m | \u001B[22m\u001B[1mEstimated transfer size\u001B[22m\r\n\u001B[32mmain-AKZLXPJQ.js\u001B[39m     \u001B[2m | \u001B[22m\u001B[2mmain\u001B[22m                 \u001B[2m | \u001B[22m  \u001B[36m2.49 MB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m269.10 kB\u001B[39m\r\n\u001B[32mchunk-ZGDJIJUD.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m\u001B[36m915.37 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m146.84 kB\u001B[39m\r\n\u001B[32mchunk-ZCTXQDQM.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m\u001B[36m180.14 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m52.86 kB\u001B[39m\r\n\u001B[32mchunk-NDT44UA2.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m \u001B[36m78.67 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m19.47 kB\u001B[39m\r\n\u001B[32mstyles-M6SL26P5.css\u001B[39m  \u001B[2m | \u001B[22m\u001B[2mstyles\u001B[22m               \u001B[2m | \u001B[22m \u001B[36m60.65 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m10.41 kB\u001B[39m\r\n\u001B[32mpolyfills-6ISPNSXF.js\u001B[39m\u001B[2m | \u001B[22m\u001B[2mpolyfills\u001B[22m            \u001B[2m | \u001B[22m \u001B[36m35.68 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m11.57 kB\u001B[39m\r\n\u001B[32mchunk-CJPLD6EO.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m3.98 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m1.05 kB\u001B[39m\r\n\u001B[32mchunk-HQXXTHGI.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m1.74 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m834 bytes\u001B[39m\r\n\u001B[32mchunk-JKNKRTE4.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m1.36 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m536 bytes\u001B[39m\r\n\u001B[32mchunk-VIASDGJO.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m1.33 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m532 bytes\u001B[39m\r\n\u001B[32mchunk-JKOY2XUY.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m\u001B[36m899 bytes\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m899 bytes\u001B[39m\r\n\u001B[32mchunk-GTKHVKS6.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m\u001B[36m676 bytes\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m676 bytes\u001B[39m\r\n\u001B[32mchunk-AARSFQYR.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m \u001B[36m69 bytes\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m69 bytes\u001B[39m\r\n\r\n\u001B[1m \u001B[22m                    \u001B[2m | \u001B[22m\u001B[1mInitial total\u001B[22m        \u001B[2m | \u001B[22m  \u001B[1m3.77 MB\u001B[22m\u001B[2m | \u001B[22m              \u001B[1m514.84 kB\u001B[22m\r\n\r\n\u001B[1mLazy chunk files\u001B[22m     \u001B[2m | \u001B[22m\u001B[1mNames\u001B[22m                \u001B[2m | \u001B[22m \u001B[1mRaw size\u001B[22m\u001B[2m | \u001B[22m\u001B[1mEstimated transfer size\u001B[22m\r\n\u001B[32mchunk-UOMNXOXO.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mapexcharts-esm\u001B[22m       \u001B[2m | \u001B[22m\u001B[36m577.87 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m129.48 kB\u001B[39m\r\n\u001B[32mchunk-JLUKR5JS.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mui-components-routes\u001B[22m \u001B[2m | \u001B[22m \u001B[36m88.77 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m20.61 kB\u001B[39m\r\n\u001B[32mchunk-BCK62OHQ.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mbrowser\u001B[22m              \u001B[2m | \u001B[22m \u001B[36m64.27 kB\u001B[39m\u001B[2m | \u001B[22m               \u001B[36m17.17 kB\u001B[39m\r\n\u001B[32mchunk-JD7VC7OF.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mpages-routes\u001B[22m         \u001B[2m | \u001B[22m \u001B[36m26.06 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m6.46 kB\u001B[39m\r\n\u001B[32mchunk-LBPI75MC.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mprofile-component\u001B[22m    \u001B[2m | \u001B[22m \u001B[36m12.40 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m3.15 kB\u001B[39m\r\n\u001B[32mchunk-UBMFNMZU.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mauthentication-routes\u001B[22m\u001B[2m | \u001B[22m \u001B[36m10.53 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m2.65 kB\u001B[39m\r\n\u001B[32mchunk-UPCU4SXQ.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m8.48 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m2.71 kB\u001B[39m\r\n\u001B[32mchunk-4HXMFZ43.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2musers-component\u001B[22m      \u001B[2m | \u001B[22m  \u001B[36m7.98 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m2.47 kB\u001B[39m\r\n\u001B[32mchunk-ATCFU6BO.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mroles-component\u001B[22m      \u001B[2m | \u001B[22m  \u001B[36m5.77 kB\u001B[39m\u001B[2m | \u001B[22m                \u001B[36m1.90 kB\u001B[39m\r\n\u001B[32mchunk-IP3VCR3U.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mextra-routes\u001B[22m         \u001B[2m | \u001B[22m  \u001B[36m1.25 kB\u001B[39m\u001B[2m | \u001B[22m              \u001B[36m515 bytes\u001B[39m\r\n\u001B[32mchunk-6QQZSCJ5.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \n\u2026[truncated]",
+        "durationMs": 35586
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": false,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 1,
+        "outputSample": "\r\n\u003E tailwindadmin@0.0.0 test\r\n\u003E ng test --watch=false\r\n\r\n\u001B[33m\u003E\u001B[39m Building...\r\n\u001B[32m\u221A\u001B[39m Building...\r\n\u001B[1mInitial chunk files\u001B[22m              \u001B[2m | \u001B[22m\u001B[1mNames\u001B[22m                         \u001B[2m | \u001B[22m \u001B[1mRaw size\u001B[22m\r\n\u001B[32mchunk-7M4IPMDN.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m  \u001B[36m2.93 MB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-K5U6WTJZ.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m  \u001B[36m2.19 MB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mpolyfills.js\u001B[39m                     \u001B[2m | \u001B[22m\u001B[2mpolyfills\u001B[22m                     \u001B[2m | \u001B[22m\u001B[36m996.54 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mspec-app.component.spec.js\u001B[39m       \u001B[2m | \u001B[22m\u001B[2mspec-app.component.spec\u001B[22m       \u001B[2m | \u001B[22m\u001B[36m234.81 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-BFR74PAA.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m\u001B[36m220.07 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-BH5EUT2T.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m \u001B[36m84.60 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mjasmine-cleanup-1.js\u001B[39m             \u001B[2m | \u001B[22m\u001B[2mjasmine-cleanup-1\u001B[22m             \u001B[2m | \u001B[22m \u001B[36m71.41 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-7W3LVFY3.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m \u001B[36m20.91 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-QW75F575.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                             \u001B[2m | \u001B[22m \u001B[36m10.01 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mspec-auth.service.spec.js\u001B[39m        \u001B[2m | \u001B[22m\u001B[2mspec-auth.service.spec\u001B[22m        \u001B[2m | \u001B[22m  \u001B[36m5.55 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mspec-table-list.component.spec.js\u001B[39m\u001B[2m | \u001B[22m\u001B[2mspec-table-list.component.spec\u001B[22m\u001B[2m | \u001B[22m  \u001B[36m4.96 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mtest_main.js\u001B[39m                     \u001B[2m | \u001B[22m\u001B[2mtest_main\u001B[22m                     \u001B[2m | \u001B[22m  \u001B[36m4.57 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mspec-user.service.spec.js\u001B[39m        \u001B[2m | \u001B[22m\u001B[2mspec-user.service.spec\u001B[22m        \u001B[2m | \u001B[22m  \u001B[36m2.88 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mjasmine-cleanup-0.js\u001B[39m             \u001B[2m | \u001B[22m\u001B[2mjasmine-cleanup-0\u001B[22m             \u001B[2m | \u001B[22m\u001B[36m519 bytes\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mstyles.css\u001B[39m                       \u001B[2m | \u001B[22m\u001B[2mstyles\u001B[22m                        \u001B[2m | \u001B[22m\u001B[36m215 bytes\u001B[39m\u001B[2m | \u001B[22m\r\n\r\n\u001B[1m \u001B[22m                                \u001B[2m | \u001B[22m\u001B[1mInitial total\u001B[22m                 \u001B[2m | \u001B[22m  \u001B[1m6.78 MB\u001B[22m\r\n\r\nApplication bundle generation complete. [6.798 seconds] - 2026-10-23T09:55:54.436Z\r\n\r\n\u001B[32m23 10 2026 04:55:55.646:INFO [karma-server]: \u001B[39mKarma v6.4.4 server started at http://localhost:9876/\r\n\u001B[32m23 10 2026 04:55:55.650:INFO [launcher]: \u001B[39mLaunching browsers Chrome with concurrency unlimited\r\n\u001B[32m23 10 2026 04:55:55.668:INFO [launcher]: \u001B[39mStarting browser Chrome\r\n\u001B[32m23 10 2026 04:56:00.175:INFO [Chrome 156.0.0.0 (Windows 10)]: \u001B[39mConnected on socket Ic_uR5bmt-V-YrIQAAAB with id 7316555\r\nChrome 156.0.0.0 (Windows 10): Executed 0 of 6\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\r\n\u001B[1A\u001B[2KChrome 156.0.0.0 (Windows 10): Executed 1 of 6\u001B[32m SUCCESS\u001B[39m (0 secs / 0.277 secs)\r\n\u001B[1A\u001B[2KChrome 156.0.0.0 (Windows 10): Executed 2 of 6\u001B[32m SUCCESS\u001B[39m (0 secs / 0.285 secs)\r\n\u001B[1A\u001B[2K\u001B[31mChrome 156.0.0.0 (Windows 10) AppComponent should create the app FAILED\u001B[39m\r\n\tError: Unexpected \u0022AppComponent2\u0022 found in the \u0022declarations\u0022 array of the \u0022TestBed.configureTestingModule\u0022 call, \u0022AppComponent2\u0022 is marked as standalone and can\u0027t be declared in any NgModule - did you intend to import it instead (by adding it to the \u0022imports\u0022 array)?\r\n\t    at node_modules/@angular/core/fesm2022/testing.mjs:513:15\r\n\t    at Array.forEach (\u003Canonymous\u003E)\r\n\t    at assertNoStandaloneComponents (node_modules/@angular/core/fesm2022/testing.mjs:509:9)\r\n\t    at TestBedCompiler.configureTestingModule (node_modules/@angular/core/fesm2022/testing.mjs:562:7)\r\n\t    at _TestBedImpl.configureTestingModule (node_modules/@angular/core/fesm2022/testing.mjs:1402:19)\r\n\t    at _TestBedImpl.configureTestingModule (node_modules/@angular/core/fesm2022/testing.mjs:1273:33)\r\n\n\u2026[truncated]",
+        "durationMs": 27302,
+        "testResults": {
+          "testFramework": "jasmine",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 0,
+          "testsPassed": 0,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": true
+        }
+      },
+      {
+        "name": "login-route-http-200",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\r\n\u003Chtml lang=\u0022en\u0022\u003E\r\n\r\n\u003Chead\u003E\n  \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n  \u003Cmeta charset=\u0022utf-8\u0022\u003E\r\n  \u003Ctitle\u003ETailwindAdmin - Angular\u003C/title\u003E\r\n  \u003Cbase href=\u0022/\u0022\u003E\r\n  \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022\u003E\r\n  \u003Clink rel=\u0022icon\u0022 type=\u0022image/x-icon\u0022 href=\u0022favicon.ico\u0022\u003E\r\n  \u003Clink rel=\u0022preconnect\u0022 href=\u0022https://fonts.gstatic.com\u0022\u003E\r\n  \u003Clink href=\u0022https://fonts.googleapis.com/css2?family=DM\u002BSans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000\u0026amp;display=swap\u0022 rel=\u0022stylesheet\u0022\u003E\r\n  \u003Clink href=\u0022https://fonts.googleapis.com/icon?family=Material\u002BIcons\u0022 rel=\u0022stylesheet\u0022\u003E\r\n  \u003Cscript src=\u0022https://code.iconify.design/2/2.0.3/iconify.min.js\u0022\u003E\u003C/script\u003E\r\n\u003Clink rel=\u0022stylesheet\u0022 href=\u0022styles.css\u0022\u003E\u003C/head\u003E\r\n\r\n\u003Cbody class=\u0022mat-typography\u0022\u003E\r\n  \u003Capp-root\u003E\u003C/app-root\u003E\r\n\u003Cscript src=\u0022polyfills.js\u0022 type=\u0022module\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022main.js\u0022 type=\u0022module\u0022\u003E\u003C/script\u003E\u003C/body\u003E\r\n\r\n\u003C/html\u003E\n--- server output ---\n\r\n\u003E tailwindadmin@0.0.0 start\r\n\u003E ng serve --host 127.0.0.1\r\n\r\n\u001B[33m\u003E\u001B[39m Building...\r\n\u001B[32m\u221A\u001B[39m Building...\r\n\u001B[1mInitial chunk files\u001B[22m              \u001B[2m | \u001B[22m\u001B[1mNames\u001B[22m                \u001B[2m | \u001B[22m \u001B[1mRaw size\u001B[22m\r\n\u001B[32mmain.js\u001B[39m                          \u001B[2m | \u001B[22m\u001B[2mmain\u001B[22m                 \u001B[2m | \u001B[22m\u001B[36m152.12 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mstyles.css\u001B[39m                       \u001B[2m | \u001B[22m\u001B[2mstyles\u001B[22m               \u001B[2m | \u001B[22m \u001B[36m72.49 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-GAVSXLF4.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m5.81 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-XOR5ZS2H.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m4.33 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-CRLPKO3Z.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m3.35 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-RRESED77.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m\u001B[36m182 bytes\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mpolyfills.js\u001B[39m                     \u001B[2m | \u001B[22m\u001B[2mpolyfills\u001B[22m            \u001B[2m | \u001B[22m \u001B[36m95 bytes\u001B[39m\u001B[2m | \u001B[22m\r\n\r\n\u001B[1m \u001B[22m                                \u001B[2m | \u001B[22m\u001B[1mInitial total\u001B[22m        \u001B[2m | \u001B[22m\u001B[1m238.38 kB\u001B[22m\r\n\r\n\u001B[1mLazy chunk files\u001B[22m                 \u001B[2m | \u001B[22m\u001B[1mNames\u001B[22m                \u001B[2m | \u001B[22m \u001B[1mRaw size\u001B[22m\r\n\u001B[32mui-components.routes-PHWYXCAG.js\u001B[39m \u001B[2m | \u001B[22m\u001B[2mui-components-routes\u001B[22m \u001B[2m | \u001B[22m\u001B[36m146.38 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mpages.routes-V6RSFS6N.js\u001B[39m         \u001B[2m | \u001B[22m\u001B[2mpages-routes\u001B[22m         \u001B[2m | \u001B[22m\u001B[36m114.69 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mauthentication.routes-3VXV5MY4.js\u001B[39m\u001B[2m | \u001B[22m\u001B[2mauthentication-routes\u001B[22m\u001B[2m | \u001B[22m \u001B[36m61.06 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-6B6TI573.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m \u001B[36m49.37 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mprofile.component-PZ77366E.js\u001B[39m    \u001B[2m | \u001B[22m\u001B[2mprofile-component\u001B[22m    \u001B[2m | \u001B[22m \u001B[36m38.46 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32musers.component-KQN2ZFTI.js\u001B[39m      \u001B[2m | \u001B[22m\u001B[2musers-component\u001B[22m      \u001B[2m | \u001B[22m \u001B[36m26.67 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mroles.component-HJWOWOI3.js\u001B[39m      \u001B[2m | \u001B[22m\u001B[2mroles-component\u001B[22m      \u001B[2m | \u001B[22m \u001B[36m23.73 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mextra.routes-CQ2PNJEO.js\u001B[39m         \u001B[2m | \u001B[22m\u001B[2mextra-routes\u001B[22m         \u001B[2m | \u001B[22m \u001B[36m17.32 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\u001B[32mchunk-SRGIWX2R.js\u001B[39m                \u001B[2m | \u001B[22m\u001B[2m-\u001B[22m                    \u001B[2m | \u001B[22m  \u001B[36m1.52 kB\u001B[39m\u001B[2m | \u001B[22m\r\n\r\nApplication bundle generation complete. [16.834 seconds] - 2026-10-23T09:56:30.447Z\r\n\r\n\u001B[1m\u001B[33m\u001B[33m\u25B2 \u001B[43;33m[\u001B[43;30mWARNING\u001B[43;33m]\u001B[0m \u001B[1mNG8011: Node matches the \u0022[matSuffix], [matIconSuffix]\u0022 slot of the \u0022MatFormField\u0022 component, but will not be projected into the specific slot because the surrounding @else if has more than one node at its root. To project the node in the right slot, you can:\r\n\r\n1. Wrap the content of the @else if block in an \u003Cng-container/\u003E that matches the \u0022[matSuffix], [matIconSuffix]\u0022 selector.\r\n2. Split the content of the @else if block across multiple @else if \n\u2026[truncated]",
+        "durationMs": 21516
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "C:\\Users\\ASUS\\Documents\\U caldas\\7mo semester\\BACK END\\PROYECTO 1\\ProyectoBackend-Front-_Security",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "angular-production-build",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\ASUS\\Documents\\U caldas\\7mo semester\\BACK END\\PROYECTO 1\\ProyectoBackend-Front-_Security",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "test",
+          "--",
+          "--watch=false"
+        ],
+        "cwd": "C:\\Users\\ASUS\\Documents\\U caldas\\7mo semester\\BACK END\\PROYECTO 1\\ProyectoBackend-Front-_Security",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "login-route-http-200",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "start",
+          "--",
+          "--host",
+          "127.0.0.1"
+        ],
+        "cwd": "C:\\Users\\ASUS\\Documents\\U caldas\\7mo semester\\BACK END\\PROYECTO 1\\ProyectoBackend-Front-_Security",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

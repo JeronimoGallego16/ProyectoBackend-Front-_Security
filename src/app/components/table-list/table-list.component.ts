@@ -33,9 +33,11 @@ export interface TableAction {
 export class DataTableComponent {
   @Input() data: any[] = [];
   @Input() columns: TableColumn[] = [];
+  @Input() deleteDisabled = false;
   @Input() actions: TableAction[] = [];
   @Output() view = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
   @Output() customAction = new EventEmitter<{ action: string; row: any }>();
 }
+

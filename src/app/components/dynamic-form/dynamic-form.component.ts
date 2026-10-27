@@ -7,7 +7,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 /**
  * Supported visual controls rendered by the generic form component.
  */
-export type FormFieldType = 'text' | 'textarea' | 'date';
+export type FormFieldType = 'text' | 'email' | 'password' | 'textarea' | 'date';
 
 /**
  * Configuration for one field rendered by the generic form component.
@@ -17,6 +17,7 @@ export interface FormFieldConfig {
   label: string;
   type: FormFieldType;
   placeholder?: string;
+  hint?: string;
 }
 
 /**
@@ -37,6 +38,7 @@ export class DynamicFormComponent {
   @Input() public fields: FormFieldConfig[] = []; // Fields that determine the controls rendered by the component.
   @Input() public isEditing = false; // Indicates whether the parent is editing an existing entity.
   @Input() public isLoading = false; // Disables actions while the parent is processing a request.
+  @Input() public submitDisabled = false;
   @Output() public submitted = new EventEmitter<Record<string, unknown>>(); // Emits the current form values when the user submits the form.
   @Output() public cancelled = new EventEmitter<void>(); // Emits when the user requests to close or reset the form.
 

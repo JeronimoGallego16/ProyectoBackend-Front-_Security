@@ -22,7 +22,9 @@
               [placeholder]="field.placeholder ?? ''"
               [matDatepicker]="picker"
             />
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <ng-container matSuffix>
+             <mat-datepicker-toggle [for]="picker"></mat-datepicker-toggle>
+            </ng-container>
             <mat-datepicker #picker></mat-datepicker>
           } @else {
             <input
@@ -30,9 +32,12 @@
               [type]="field.type"
               [formControlName]="field.name"
               [placeholder]="field.placeholder ?? ''"
+              [autocomplete]="field.type === 'password' ? 'new-password' : null"
             />
           }
-
+          @if (field.hint) {
+            <mat-hint>{{ field.hint }}</mat-hint>
+          }
         </mat-form-field>
       }
 
@@ -49,7 +54,7 @@
           mat-flat-button
           color="primary"
           type="submit"
-          [disabled]="isLoading || form.invalid"
+          [disabled]="isLoading || form.invalid || submitDisabled"
         >
           {{ isEditing ? 'Update' : 'Create' }}
         </button>

@@ -17,6 +17,7 @@ import { MaterialModule } from 'src/app/material.module';
 })
 export class ConfirmDialogComponent {
   @Input() public open = false;
+  @Input() public isLoading = false;
   @Input() public title = 'Confirm action';
   @Input() public message = 'Are you sure?';
   @Output() public confirm = new EventEmitter<void>();

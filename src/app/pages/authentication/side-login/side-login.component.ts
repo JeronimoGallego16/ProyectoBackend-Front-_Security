@@ -1,29 +1,66 @@
 import { Component } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
-import { FormsModule } from '@angular/forms';
-import { ReactiveFormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-side-login',
-  imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
+  standalone: true,
+  imports: [RouterModule, MaterialModule, ReactiveFormsModule],
   templateUrl: './side-login.component.html',
 })
 export class AppSideLoginComponent {
-  constructor(private router: Router) {}
+  public isLoading = false;
+  public errorMessage = '';
+  public isPasswordVisible = false;
+  public readonly form: FormGroup<{
+    email: FormControl<string>;
+    password: FormControl<string>;
+  }>;
 
-  form = new FormGroup({
-    uname: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    password: new FormControl('', [Validators.required]),
-  });
-
-  get f() {
-    return this.form.controls;
+  constructor(
+    private readonly formBuilder: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {
+    this.form = this.formBuilder.nonNullable.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required]],
+    });
   }
 
-  submit() {
-    this.router.navigate(['']);
+  public submit(): void {
+    if (this.form.invalid || this.isLoading) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.errorMessage = '';
+    this.isLoading = true;
+    this.authService
+      .login(this.form.getRawValue())
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/dashboard']),
+        error: (error) => {
+          this.errorMessage =
+            error?.status === 401
+              ? 'Correo o contraseña incorrectos.'
+              : 'No se pudo iniciar sesión. Verifica que el servicio esté disponible e inténtalo de nuevo.';
+        },
+      });
+  }
+
+  public togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 }

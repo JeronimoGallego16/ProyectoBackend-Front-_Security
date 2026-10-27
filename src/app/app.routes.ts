@@ -1,11 +1,13 @@
 import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { authGuard } from './services/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: FullComponent,
+    canActivateChild: [authGuard],
     children: [
       {
         path: '',
@@ -52,6 +54,11 @@ export const routes: Routes = [
         path: 'profiles',
         loadComponent: () =>
           import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./pages/users/users.component').then((m) => m.UsersComponent),
       }
     ],
   },

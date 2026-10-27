@@ -3,28 +3,62 @@
     <div class="grid grid-cols-12 gap-6">
       <div class="lg:col-span-6 col-span-12 flex items-stretch">
         <div class="w-full p-10 flex flex-col justify-center aling-center">
-          <div class="text-center">Your Social Campaigns</div>
+          <div class="text-center">Sign in to your account</div>
 
-          <form class="mt-8">
-            <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block text-start">Username</mat-label>
+          <form class="mt-8" [formGroup]="form" (ngSubmit)="submit()">
+            <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block text-start">Email</mat-label>
             <mat-form-field appearance="outline" class="w-full" color="primary">
-              <input matInput />
+              <input matInput type="email" formControlName="email" autocomplete="username" />
+              @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+                <mat-error>Email is required.</mat-error>
+              } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address.</mat-error>
+              }
             </mat-form-field>
 
             <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block text-start">Password</mat-label>
             <mat-form-field appearance="outline" class="w-full" color="primary">
-              <input matInput type="password" />
+              <input
+                matInput
+                [type]="isPasswordVisible ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="isPasswordVisible ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="isPasswordVisible"
+                (click)="togglePasswordVisibility()"
+              >
+                <mat-icon>{{ isPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+                <mat-error>Password is required.</mat-error>
+              }
             </mat-form-field>
 
-            <div class="flex items-center justify-between mb-3">
-              <mat-checkbox color="primary">Remember this Device</mat-checkbox>
-              <a [routerLink]="['/']" class="text-primary font-semibold no-underline text-sm">Forgot Password
-                ?</a>
-            </div>
-            <a [routerLink]="['/']" mat-flat-button color="primary" class="w-full">
-              Sign In
-            </a>
+            @if (errorMessage) {
+              <p class="mb-3 text-sm text-red-700" role="alert">{{ errorMessage }}</p>
+            }
 
+            <div class="flex items-center justify-between mb-3">
+              <mat-checkbox color="primary" disabled>Remember this Device</mat-checkbox>
+              <a
+                routerLink="/authentication/forgot-password"
+                class="text-primary font-semibold no-underline text-sm"
+              >Forgot Password?</a>
+            </div>
+            <button
+              mat-flat-button
+              color="primary"
+              class="w-full"
+              type="submit"
+              [disabled]="isLoading"
+            >
+              @if (isLoading) { Signing in... } @else { Sign In }
+            </button>
           </form>
           <span class="block font-medium text-center mt-6">New to Modernize?
             <a [routerLink]="['/authentication/register']" class="no-underline text-primary font-medium text-sm">
