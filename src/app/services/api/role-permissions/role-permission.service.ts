@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { RolePermission } from '../models/role-permission.model';
-import { RolePermissionRequestDTO } from '../models/dtos/role-permission-request.dto';
+import { RolePermission } from '../../../models/role-permission.model';
+import { RolePermissionRequestDTO } from '../../../models/dtos/role-permission-request.dto';
 
 /**
  * REST endpoints. It centralizes every HTTP operation related to role-permission

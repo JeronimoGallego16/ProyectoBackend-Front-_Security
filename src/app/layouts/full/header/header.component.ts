@@ -6,7 +6,7 @@ import {
   Input,
   ViewEncapsulation,
 } from '@angular/core';
-import { CoreService } from 'src/app/services/core.service';
+import { CoreService } from 'src/app/services/layout/core.service';
 import { MatDialog } from '@angular/material/dialog';
 import { navItems } from '../sidebar/sidebar-data';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,8 +19,8 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { AppSettings } from 'src/app/config';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { AuthService } from 'src/app/services/auth.service';
-import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { AuthService } from 'src/app/services/auth/auth.service';
+import { FeedbackHandlerService } from 'src/app/services/ui/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 
 interface notifications {

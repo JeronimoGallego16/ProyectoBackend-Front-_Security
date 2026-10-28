@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { Permission } from '../models/permission.model';
-import { PermissionRequestDTO } from '../models/dtos/permission-request.dto';
+import { Permission } from '../../../models/permission.model';
+import { PermissionRequestDTO } from '../../../models/dtos/permission-request.dto';
 
 /**
  * Service responsible for consuming the security microservice `Permission`

@@ -22,8 +22,8 @@ import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confir
 import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
-import { RoleService } from 'src/app/services/role.service';
-import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { RoleService } from 'src/app/services/api/roles/role.service';
+import { FeedbackHandlerService } from 'src/app/services/ui/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 
 @Component({

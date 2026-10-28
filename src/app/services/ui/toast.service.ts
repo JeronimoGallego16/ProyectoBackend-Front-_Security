@@ -7,7 +7,7 @@ import {
   ToastOptions,
   ToastPosition,
   ToastType,
-} from '../models/toast.model';
+} from '../../models/toast.model';
 
 /**
  * Central authority for toast notifications.

@@ -20,8 +20,8 @@ import { MaterialModule } from 'src/app/material.module';
 import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import { PermissionRequestDTO } from 'src/app/models/dtos/permission-request.dto';
 import { Permission } from 'src/app/models/permission.model';
-import { PermissionService } from 'src/app/services/permission.service';
-import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { PermissionService } from 'src/app/services/api/permissions/permission.service';
+import { FeedbackHandlerService } from 'src/app/services/ui/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 
 /**

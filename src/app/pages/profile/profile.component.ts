@@ -14,9 +14,9 @@ import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confir
 import { MaterialModule } from 'src/app/material.module';
 import { Profile } from 'src/app/models/profile.model';
 import { ProfileRequestDTO } from 'src/app/models/dtos/profile-request.dto';
-import { ProfileService } from 'src/app/services/profile.service';
-import { UserService } from 'src/app/services/user.service';
-import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { ProfileService } from 'src/app/services/api/profiles/profile.service';
+import { UserService } from 'src/app/services/api/users/user.service';
+import { FeedbackHandlerService } from 'src/app/services/ui/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 
 interface ProfileTableRow {

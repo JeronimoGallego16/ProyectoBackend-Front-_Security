@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ToastService } from './toast.service';
-import { ToastOptions } from '../models/toast.model';
-import { FeedbackException } from '../models/feedback-exception';
+import { ToastOptions } from '../../models/toast.model';
+import { FeedbackException } from '../../models/feedback-exception';
 
 /**
  * Single responsibility: translate a frontend feedback case (similar to the

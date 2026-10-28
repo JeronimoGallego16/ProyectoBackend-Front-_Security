@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, switchMap, tap } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { AuthSession } from '../models/auth-response.model';
-import { LoginRequestDTO } from '../models/dtos/login-request.dto';
+import { AuthSession } from '../../models/auth-response.model';
+import { LoginRequestDTO } from '../../models/dtos/login-request.dto';
 import { CsrfService } from './csrf.service';
 
 @Injectable({ providedIn: 'root' })

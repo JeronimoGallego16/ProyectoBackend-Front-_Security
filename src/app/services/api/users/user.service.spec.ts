@@ -5,9 +5,9 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { environment } from 'src/environment/environment';
-import { CreateUserDTO } from '../models/dtos/create-user.dto';
-import { UpdateUserDTO } from '../models/dtos/update-user.dto';
-import { User } from '../models/user.model';
+import { CreateUserDTO } from '../../../models/dtos/create-user.dto';
+import { UpdateUserDTO } from '../../../models/dtos/update-user.dto';
+import { User } from '../../../models/user.model';
 import { UserService } from './user.service';
 
 describe('UserService', () => {

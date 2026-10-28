@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CoreService } from 'src/app/services/core.service';
+import { CoreService } from 'src/app/services/layout/core.service';
 
 import { RouterOutlet } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';

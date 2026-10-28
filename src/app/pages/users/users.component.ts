@@ -22,8 +22,8 @@ import { CreateUserDTO } from 'src/app/models/dtos/create-user.dto';
 import { UpdateUserDTO } from 'src/app/models/dtos/update-user.dto';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { User } from 'src/app/models/user.model';
-import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
-import { UserService } from 'src/app/services/user.service';
+import { FeedbackHandlerService } from 'src/app/services/ui/feedback-handler.service';
+import { UserService } from 'src/app/services/api/users/user.service';
 
 interface UserFormControls {
   name: FormControl<string>;

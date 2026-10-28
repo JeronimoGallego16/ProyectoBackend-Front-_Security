@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { Role } from '../models/role.model';
-import { RoleRequestDTO } from '../models/dtos/role-request.dto';
-import { RoleDetailWithPermissions } from '../models/role-detail-with-permissions.model';
+import { Role } from '../../../models/role.model';
+import { RoleRequestDTO } from '../../../models/dtos/role-request.dto';
+import { RoleDetailWithPermissions } from '../../../models/role-detail-with-permissions.model';
 
 /**
  * Service responsible for consuming the security microservice `Role` REST

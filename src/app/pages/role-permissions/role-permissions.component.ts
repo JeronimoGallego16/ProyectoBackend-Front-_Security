@@ -9,9 +9,9 @@ import { Permission } from 'src/app/models/permission.model';
 import { Role } from 'src/app/models/role.model';
 import { RolePermissionDetail } from 'src/app/models/role-detail-with-permissions.model';
 import { RolePermissionRequestDTO } from 'src/app/models/dtos/role-permission-request.dto';
-import { PermissionService } from 'src/app/services/permission.service';
-import { RolePermissionService } from 'src/app/services/role-permission.service';
-import { RoleService } from 'src/app/services/role.service';
+import { PermissionService } from 'src/app/services/api/permissions/permission.service';
+import { RolePermissionService } from 'src/app/services/api/role-permissions/role-permission.service';
+import { RoleService } from 'src/app/services/api/roles/role.service';
 
 /**
  * Presentation layer page that manages the assignment of permissions to roles.

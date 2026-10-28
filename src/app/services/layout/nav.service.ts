@@ -3,7 +3,7 @@ import { Event, NavigationEnd, Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class NavService {
-  showClass: any = false;
+  showClass = false;
 
   public currentUrl = signal<string | undefined>(undefined);
 

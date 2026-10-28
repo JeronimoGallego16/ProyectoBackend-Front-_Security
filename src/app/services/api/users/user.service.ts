@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { CreateUserDTO } from '../models/dtos/create-user.dto';
-import { UpdateUserDTO } from '../models/dtos/update-user.dto';
-import { User } from '../models/user.model';
+import { CreateUserDTO } from '../../../models/dtos/create-user.dto';
+import { UpdateUserDTO } from '../../../models/dtos/update-user.dto';
+import { User } from '../../../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
