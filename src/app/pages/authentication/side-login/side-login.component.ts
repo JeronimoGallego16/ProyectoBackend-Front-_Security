@@ -1,117 +1,120 @@
-﻿import { Component, inject, OnInit } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
-import { FormsModule } from '@angular/forms';
-import { ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
 import { OAuthService } from 'src/app/services/oauth.service';
 import { OAuthResult } from 'src/app/models/oauth/oauth-result.model';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 
 @Component({
   selector: 'app-side-login',
-  imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule, CommonModule],
+  standalone: true,
+  imports: [RouterModule, MaterialModule, ReactiveFormsModule],
   templateUrl: './side-login.component.html',
 })
 export class AppSideLoginComponent implements OnInit {
-  /**
-   * OAuth service used to delegate social authentication.
-   */
   private readonly oauthService = inject(OAuthService);
+  private readonly feedbackHandler = inject(FeedbackHandlerService);
 
-  /**
-   * Creates the login page controller.
-   *
-   * @param router - Router used to navigate after authentication.
-   * @param feedbackHandler - Service used to display authentication feedback.
-   */
-  constructor(
-    private router: Router,
-    private readonly feedbackHandler: FeedbackHandlerService
-  ) {}
-
-  form = new FormGroup({
-    uname: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    password: new FormControl('', [Validators.required]),
-  });
-
-  /**
-   * Loading state for OAuth flows.
-   */
-  public isOAuthLoading: boolean = false;
-
-  /**
-   * OAuthResult captured from a successful flow. This is left as an integration point
-   * for the future general authentication/session service to consume.
-   */
+  public isLoading = false;
+  public isOAuthLoading = false;
+  public errorMessage = '';
+  public isPasswordVisible = false;
   public lastOAuthResult: OAuthResult | null = null;
+  public readonly form: FormGroup<{
+    email: FormControl<string>;
+    password: FormControl<string>;
+  }>;
 
-  get f() {
-    return this.form.controls;
+  constructor(
+    private readonly formBuilder: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {
+    this.form = this.formBuilder.nonNullable.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required]],
+    });
   }
 
-  submit() {
-    this.router.navigate(['/dashboard']);
+  public ngOnInit(): void {
+    void this.handleMicrosoftRedirectIfAny();
   }
 
-  ngOnInit(): void {
-    // Attempt to process Microsoft redirect result if present (for testing purposes only)
-    this.handleMicrosoftRedirectIfAny();
+  public submit(): void {
+    if (this.form.invalid || this.isLoading) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.errorMessage = '';
+    this.isLoading = true;
+    this.authService
+      .login(this.form.getRawValue())
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/dashboard']),
+        error: (error) => {
+          this.errorMessage =
+            error?.status === 401
+              ? 'Correo o contraseña incorrectos.'
+              : 'No se pudo iniciar sesión. Verifica que el servicio esté disponible e inténtalo de nuevo.';
+        },
+      });
+  }
+
+  public togglePasswordVisibility(): void {
+    this.isPasswordVisible = !this.isPasswordVisible;
   }
 
   /**
-   * Initiates Google OAuth sign-in via OAuthService.
-   * Does not navigate automatically.
+   * Initiates Google OAuth sign-in and navigates to the dashboard on success.
    */
   public async loginWithGoogle(): Promise<void> {
-    this.clearOAuthState();
-    this.isOAuthLoading = true;
-    try {
-      const result = await this.oauthService.loginWithGoogle();
-      this.lastOAuthResult = result;
-      await this.router.navigate(['/dashboard']);
-    } catch (error: unknown) {
-      this.publishOAuthError(error);
-    } finally {
-      this.isOAuthLoading = false;
-    }
+    await this.loginWithOAuth(() => this.oauthService.loginWithGoogle());
   }
 
   /**
-   * Initiates Microsoft OAuth sign-in via OAuthService.
-   * Falls back to redirect if popup is blocked/cancelled per OAuthService logic.
-   * Does not navigate automatically.
+   * Initiates Microsoft OAuth sign-in and handles its popup-to-redirect fallback.
    */
   public async loginWithMicrosoft(): Promise<void> {
     this.clearOAuthState();
     this.isOAuthLoading = true;
+
     try {
-      const result = await this.oauthService.loginWithMicrosoft();
-      this.lastOAuthResult = result;
+      this.lastOAuthResult = await this.oauthService.loginWithMicrosoft();
       await this.router.navigate(['/dashboard']);
     } catch (error: unknown) {
-      const message = this.getErrorMessage(error);
-      if (message === 'MICROSOFT_REDIRECT_INITIATED') {
-        return;
+      if (this.getErrorMessage(error) !== 'MICROSOFT_REDIRECT_INITIATED') {
+        this.publishOAuthError(error);
       }
-      this.publishOAuthError(error);
     } finally {
       this.isOAuthLoading = false;
     }
   }
 
   /**
-   * Initiates GitHub OAuth sign-in via OAuthService.
-   * Does not navigate automatically.
+   * Initiates GitHub OAuth sign-in and navigates to the dashboard on success.
    */
   public async loginWithGithub(): Promise<void> {
+    await this.loginWithOAuth(() => this.oauthService.loginWithGithub());
+  }
+
+  private async loginWithOAuth(login: () => Promise<OAuthResult>): Promise<void> {
     this.clearOAuthState();
     this.isOAuthLoading = true;
+
     try {
-      const result = await this.oauthService.loginWithGithub();
-      this.lastOAuthResult = result;
+      this.lastOAuthResult = await login();
       await this.router.navigate(['/dashboard']);
     } catch (error: unknown) {
       this.publishOAuthError(error);
@@ -120,13 +123,9 @@ export class AppSideLoginComponent implements OnInit {
     }
   }
 
-  /**
-   * Processes pending Microsoft redirect result without automatic navigation.
-   * Captures OAuthResult at integration point for future consumption.
-   */
   private async handleMicrosoftRedirectIfAny(): Promise<void> {
-    this.clearOAuthState();
     this.isOAuthLoading = true;
+
     try {
       const result = await this.oauthService.handleMicrosoftRedirect();
       if (result) {
@@ -140,18 +139,10 @@ export class AppSideLoginComponent implements OnInit {
     }
   }
 
-  /**
-   * Clears OAuth related state before starting a new flow.
-   */
   private clearOAuthState(): void {
     this.lastOAuthResult = null;
   }
 
-  /**
-   * Publishes a normalized OAuth error through the global feedback handler.
-   *
-   * @param error - Error raised by the OAuth provider or authentication flow.
-   */
   private publishOAuthError(error: unknown): void {
     this.feedbackHandler.error(
       'OAUTH_LOGIN_FAILED',
@@ -160,18 +151,16 @@ export class AppSideLoginComponent implements OnInit {
     );
   }
 
-  /**
-   * Extracts a displayable error message from unknown error.
-   */
   private getErrorMessage(error: unknown): string {
-    if (typeof error === 'object' && error !== null) {
-      if ('message' in error && typeof (error as { message: unknown }).message === 'string') {
-        return (error as { message: string }).message;
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      const message = (error as { message: unknown }).message;
+      if (typeof message === 'string') {
+        return message;
       }
     }
-    if (typeof error === 'string') {
-      return error;
-    }
-    return 'An error occurred during OAuth authentication.';
+
+    return typeof error === 'string'
+      ? error
+      : 'An error occurred during OAuth authentication.';
   }
 }

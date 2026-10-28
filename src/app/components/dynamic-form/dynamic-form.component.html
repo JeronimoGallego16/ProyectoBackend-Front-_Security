@@ -35,6 +35,9 @@
             />
           }
 
+          @if (field.hint) {
+            <mat-hint>{{ field.hint }}</mat-hint>
+          }
         </mat-form-field>
       }
 

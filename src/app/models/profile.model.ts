@@ -8,5 +8,7 @@ export interface Profile {
   id: number;
   phone: string;
   birthDate: string; // ISO-8601 date (yyyy-MM-dd)
+  profileImageUrl: string | null;
+  userId: number;
   user?: User;
 }

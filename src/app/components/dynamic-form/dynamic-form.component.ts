@@ -7,7 +7,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 /**
  * Supported visual controls rendered by the generic form component.
  */
-export type FormFieldType = 'text' | 'textarea' | 'date';
+export type FormFieldType = 'text' | 'email' | 'password' | 'textarea' | 'date';
 
 /**
  * Configuration for one field rendered by the generic form component.
@@ -17,6 +17,7 @@ export interface FormFieldConfig {
   label: string;
   type: FormFieldType;
   placeholder?: string;
+  hint?: string;
 }
 
 /**

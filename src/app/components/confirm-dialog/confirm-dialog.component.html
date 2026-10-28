@@ -12,6 +12,7 @@
         <button
           mat-stroked-button
           type="button"
+          [disabled]="isLoading"
           (click)="cancel.emit()"
         >
           Cancel
@@ -20,6 +21,7 @@
           mat-flat-button
           type="button"
           color="warn"
+          [disabled]="isLoading"
           (click)="confirm.emit()"
         >
           <mat-icon>delete</mat-icon>

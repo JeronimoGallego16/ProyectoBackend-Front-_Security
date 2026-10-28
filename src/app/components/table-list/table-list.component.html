@@ -36,7 +36,13 @@
               <button mat-icon-button color="accent" matTooltip="Editar" (click)="edit.emit(item)">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="delete.emit(item)">
+              <button
+                mat-icon-button
+                color="warn"
+                [matTooltip]="deleteDisabled ? 'Pendiente de integración con backend' : 'Eliminar'"
+                [disabled]="deleteDisabled"
+                (click)="delete.emit(item)"
+              >
                 <mat-icon>delete</mat-icon>
               </button>
               @for (action of actions; track action.label) {
@@ -58,7 +64,7 @@
       @if (data.length === 0) {
         <tr>
           <td [attr.colspan]="columns.length + 1" class="px-4 py-8 text-center text-gray-400">
-            No hay datos disponibles
+            No data
           </td>
         </tr>
       }
