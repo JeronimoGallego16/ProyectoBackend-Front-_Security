@@ -9,11 +9,12 @@ import {
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { OAuthService } from 'src/app/services/oauth.service';
-import { OAuthResult } from 'src/app/models/oauth/oauth-result.model';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { FeedbackCase } from 'src/app/models/feedback-case';
+import { OAuthResult } from 'src/app/models/oauth/oauth-result.model';
 
 @Component({
   selector: 'app-side-login',
@@ -23,13 +24,10 @@ import { FeedbackHandlerService } from 'src/app/services/feedback-handler.servic
 })
 export class AppSideLoginComponent implements OnInit {
   private readonly oauthService = inject(OAuthService);
-  private readonly feedbackHandler = inject(FeedbackHandlerService);
 
   public isLoading = false;
   public isOAuthLoading = false;
-  public errorMessage = '';
   public isPasswordVisible = false;
-  public lastOAuthResult: OAuthResult | null = null;
   public readonly form: FormGroup<{
     email: FormControl<string>;
     password: FormControl<string>;
@@ -38,7 +36,8 @@ export class AppSideLoginComponent implements OnInit {
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly feedbackHandlerService: FeedbackHandlerService
   ) {
     this.form = this.formBuilder.nonNullable.group({
       email: ['', [Validators.required, Validators.email]],
@@ -56,7 +55,6 @@ export class AppSideLoginComponent implements OnInit {
       return;
     }
 
-    this.errorMessage = '';
     this.isLoading = true;
     this.authService
       .login(this.form.getRawValue())
@@ -64,10 +62,7 @@ export class AppSideLoginComponent implements OnInit {
       .subscribe({
         next: () => this.router.navigate(['/dashboard']),
         error: (error) => {
-          this.errorMessage =
-            error?.status === 401
-              ? 'Correo o contraseña incorrectos.'
-              : 'No se pudo iniciar sesión. Verifica que el servicio esté disponible e inténtalo de nuevo.';
+          this.handleLoginError(error);
         },
       });
   }
@@ -87,15 +82,17 @@ export class AppSideLoginComponent implements OnInit {
    * Initiates Microsoft OAuth sign-in and handles its popup-to-redirect fallback.
    */
   public async loginWithMicrosoft(): Promise<void> {
-    this.clearOAuthState();
     this.isOAuthLoading = true;
 
     try {
-      this.lastOAuthResult = await this.oauthService.loginWithMicrosoft();
-      await this.router.navigate(['/dashboard']);
+      const result = await this.oauthService.loginWithMicrosoft();
+      await this.authenticateWithBackend(result.idToken);
     } catch (error: unknown) {
-      if (this.getErrorMessage(error) !== 'MICROSOFT_REDIRECT_INITIATED') {
-        this.publishOAuthError(error);
+      if (
+        this.getErrorMessage(this.getErrorResponse(error))
+        !== 'MICROSOFT_REDIRECT_INITIATED'
+      ) {
+        this.handleOAuthError(error);
       }
     } finally {
       this.isOAuthLoading = false;
@@ -109,58 +106,137 @@ export class AppSideLoginComponent implements OnInit {
     await this.loginWithOAuth(() => this.oauthService.loginWithGithub());
   }
 
+  /**
+   * Runs the Firebase flow and exchanges the ID token with the backend.
+   * Navigation only happens once the backend confirms the session.
+   *
+   * @param login - Firebase OAuth operation to execute.
+   */
   private async loginWithOAuth(login: () => Promise<OAuthResult>): Promise<void> {
-    this.clearOAuthState();
     this.isOAuthLoading = true;
 
     try {
-      this.lastOAuthResult = await login();
-      await this.router.navigate(['/dashboard']);
+      const result = await login();
+      await this.authenticateWithBackend(result.idToken);
     } catch (error: unknown) {
-      this.publishOAuthError(error);
+      this.handleOAuthError(error);
     } finally {
       this.isOAuthLoading = false;
     }
   }
 
+  /**
+   * Processes a pending Microsoft redirect result and exchanges it with the backend.
+   */
   private async handleMicrosoftRedirectIfAny(): Promise<void> {
     this.isOAuthLoading = true;
 
     try {
       const result = await this.oauthService.handleMicrosoftRedirect();
       if (result) {
-        this.lastOAuthResult = result;
-        await this.router.navigate(['/dashboard']);
+        await this.authenticateWithBackend(result.idToken);
       }
     } catch (error: unknown) {
-      this.publishOAuthError(error);
+      this.handleOAuthError(error);
     } finally {
       this.isOAuthLoading = false;
     }
   }
 
-  private clearOAuthState(): void {
-    this.lastOAuthResult = null;
+  /**
+   * Sends the Firebase ID token to the backend and navigates after a confirmed session.
+   *
+   * @param idToken - Firebase ID token issued after a successful OAuth flow.
+   */
+  private async authenticateWithBackend(idToken: string): Promise<void> {
+    await firstValueFrom(this.authService.loginWithOAuth({ idToken }));
+    await this.router.navigate(['/dashboard']);
   }
 
-  private publishOAuthError(error: unknown): void {
-    this.feedbackHandler.error(
-      'OAUTH_LOGIN_FAILED',
-      this.getErrorMessage(error),
-      { title: 'Authentication error' }
-    );
+  /**
+   * Applies the same error handling used by the classic login form.
+   *
+   * @param error - Error thrown by Firebase or the backend.
+   */
+  private handleOAuthError(error: unknown): void {
+    this.showFeedback(error);
   }
 
-  private getErrorMessage(error: unknown): string {
-    if (typeof error === 'object' && error !== null && 'message' in error) {
-      const message = (error as { message: unknown }).message;
-      if (typeof message === 'string') {
-        return message;
-      }
+  /**
+   * Publishes the error received from the authentication endpoint.
+   *
+   * @param error - Error thrown by the authentication service.
+   */
+  private handleLoginError(error: unknown): void {
+    this.showFeedback(error);
+  }
+
+  /**
+   * Uses the backend status as the feedback case and the backend-provided
+   * message as the toast content.
+   *
+   * @param error - Error thrown by an authentication operation.
+   */
+  private showFeedback(error: unknown): void {
+    const response = this.getErrorResponse(error);
+    const code = response.status === 401
+      ? FeedbackCase.UNAUTHORIZED
+      : String(response.status ?? FeedbackCase.SERVER_ERROR);
+    const message = this.getErrorMessage(response);
+    this.feedbackHandlerService.error(code, message);
+  }
+
+  /**
+   * Safely extracts the response fields used by the feedback handler.
+   *
+   * @param error - Unknown error.
+   * @returns Error response fields when present.
+   */
+  private getErrorResponse(error: unknown): {
+    status?: number;
+    message?: string;
+    error?: { message?: string } | string;
+    statusText?: string;
+  } {
+    if (typeof error === 'object' && error !== null) {
+      return error as {
+        status?: number;
+        message?: string;
+        error?: { message?: string } | string;
+        statusText?: string;
+      };
     }
 
-    return typeof error === 'string'
-      ? error
-      : 'An error occurred during OAuth authentication.';
+    return { message: typeof error === 'string' ? error : undefined };
+  }
+
+  /**
+   * Resolves the message supplied by the backend or authentication provider.
+   *
+   * @param response - Error response fields.
+   * @returns Message to publish through the feedback service.
+   */
+  private getErrorMessage(response: {
+    message?: string;
+    error?: { message?: string } | string;
+    statusText?: string;
+  }): string {
+    if (typeof response.error === 'string' && response.error.trim()) {
+      return response.error;
+    }
+
+    if (
+      response.error
+      && typeof response.error === 'object'
+      && response.error.message?.trim()
+    ) {
+      return response.error.message;
+    }
+
+    if (response.statusText?.trim()) {
+      return response.statusText;
+    }
+
+    return response.message ?? '';
   }
 }
