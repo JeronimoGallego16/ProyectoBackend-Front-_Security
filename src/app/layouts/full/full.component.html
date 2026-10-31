@@ -24,8 +24,11 @@
     <!-- ============================================================== -->
     <mat-sidenav-content class="contentWrapper" #content>
 
-      <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()" (toggleMobileNav)="sidenav.toggle()"
-        (toggleMobileFilterNav)="toggleFilterNav()" (optionsChange)="receiveOptions($event)"></app-header>
+      <app-header
+        [showToggle]="!isOver"
+        (toggleMobileNav)="sidenav.toggle()"
+        (optionsChange)="receiveOptions($event)"
+      ></app-header>
 
       <main class="pageWrapper" [ngClass]="{
           maxWidth: options.boxed
