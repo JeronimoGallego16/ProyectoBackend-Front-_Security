@@ -1,0 +1,107 @@
+<div class="p-6">
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">User roles</h1>
+    <p class="text-sm text-gray-600">
+      Select a role to view and manage the users assigned to it.
+    </p>
+  </div>
+
+  @if (isLoading && roles.length === 0) {
+    <div class="flex justify-center py-6"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <div class="overflow-hidden rounded-lg border">
+          <div class="border-b bg-gray-50 px-4 py-3">
+            <h2 class="text-sm font-semibold text-gray-700">Roles</h2>
+          </div>
+          <div class="max-h-[600px] overflow-y-auto">
+            @for (role of roles; track role.id) {
+              <button
+                type="button"
+                class="w-full border-b px-4 py-3 text-left transition-colors hover:bg-gray-50"
+                [class.bg-blue-50]="selectedRole?.id === role.id"
+                (click)="onRoleSelect(role)"
+              >
+                <div class="font-medium text-gray-800">{{ role.name }}</div>
+                <div class="truncate text-xs text-gray-500">{{ role.description }}</div>
+              </button>
+            } @empty {
+              <div class="px-4 py-6 text-center text-sm text-gray-400">No roles available</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-12 md:col-span-9">
+        @if (!selectedRole) {
+          <div class="rounded-lg border border-dashed p-8 text-center text-gray-500">
+            Select a role from the list to manage its users.
+          </div>
+        } @else if (isLoading) {
+          <div class="flex justify-center py-6"><mat-spinner diameter="40"></mat-spinner></div>
+        } @else {
+          <div class="mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">{{ selectedRole.name }}</h2>
+            <p class="text-sm text-gray-600">{{ selectedRole.description }}</p>
+          </div>
+
+          <section class="mb-6 rounded-lg border p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <h3 class="font-semibold text-gray-800">Assigned users ({{ assignedUsers.length }})</h3>
+            </div>
+            @if (assignedUsers.length > 0) {
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead><tr class="border-b text-gray-600"><th class="px-3 py-2">Name</th><th class="px-3 py-2">Email</th><th class="px-3 py-2 text-right">Action</th></tr></thead>
+                  <tbody>
+                    @for (user of assignedUsers; track user.id) {
+                      <tr class="border-b last:border-0">
+                        <td class="px-3 py-2 font-medium">{{ user.name }}</td>
+                        <td class="px-3 py-2">{{ user.email }}</td>
+                        <td class="px-3 py-2 text-right"><button mat-stroked-button color="warn" type="button" (click)="requestRemoval(user)">Remove role</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-sm text-gray-500">No users are assigned to this role.</p>
+            }
+          </section>
+
+          <section class="rounded-lg border p-4">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <h3 class="font-semibold text-gray-800">Available users ({{ availableUsers.length }})</h3>
+              <button mat-flat-button color="primary" type="button" [disabled]="isSaving || selectedUserIds.size === 0" (click)="assignSelectedUsers()">
+                @if (isSaving) { <mat-spinner diameter="20"></mat-spinner> } @else { <mat-icon>person_add</mat-icon> }
+                Assign selected
+              </button>
+            </div>
+            @if (availableUsers.length > 0) {
+              <div class="grid gap-2 sm:grid-cols-2">
+                @for (user of availableUsers; track user.id) {
+                  <label class="flex cursor-pointer items-center gap-3 rounded border p-3 hover:bg-gray-50">
+                    <input type="checkbox" [checked]="isSelected(user.id)" (change)="toggleUser(user.id)" />
+                    <span><span class="block font-medium">{{ user.name }}</span><span class="block text-xs text-gray-500">{{ user.email }}</span></span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <p class="text-sm text-gray-500">All registered users already have this role.</p>
+            }
+          </section>
+        }
+      </div>
+    </div>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmRemovalOpen"
+    [isLoading]="isSaving"
+    title="Remove role"
+    [message]="pendingRemoval ? 'Are you sure you want to remove ' + selectedRole?.name + ' from ' + pendingRemoval.name + '?' : 'Are you sure?'"
+    (confirm)="confirmRemoval()"
+    (cancel)="cancelRemoval()"
+  ></app-confirm-dialog>
+</div>

@@ -87,10 +87,11 @@ La relación usuario-rol se describe como recurso aparte en `/api/user-roles`:
 | `DELETE` | `/api/user-roles/{userId}/{roleId}` | Retira la asignación. |
 
 Una asignación duplicada produce `409`; IDs no encontrados producen `404`.
-No se integró la asignación de roles al formulario CRUD de usuario: falta
-confirmar qué perfiles pueden administrar asignaciones y cómo debe mostrarse
-esa función en la interfaz. También deben probarse las restricciones de
-integridad al borrar roles o usuarios relacionados.
+La asignación de roles se integra en una pantalla independiente de
+administración (`/user-roles`), donde se selecciona un rol, se consultan sus
+usuarios, se asignan usuarios disponibles y se retiran asignaciones con
+confirmación. La autorización efectiva para administrar estas operaciones
+debe seguir validándose en el backend.
 
 ### Autenticación, JWT y sesiones (referencia histórica; ver contrato actualizado)
 
@@ -146,8 +147,10 @@ permisos. Ocultar botones en Angular no protege la API.
 - El frontend valida nombre (2–100), formato de correo y contraseña (8–72,
   mayúscula, minúscula, número, carácter especial requerido, sin espacios).
   El backend debe repetir y hacer cumplir las validaciones.
-- No hay aún modelos/servicios frontend para asignaciones `UserRole` o sesiones
-  de aplicación. No se envían roles en el DTO de usuario.
+- El frontend cuenta con modelos y servicio para asignaciones `UserRole` en
+  `src/app/models/user-role.model.ts`, `src/app/models/dtos/user-role-request.dto.ts`
+  y `src/app/services/user-role.service.ts`. Las asignaciones se administran
+  desde `/user-roles`; no se envían roles en el DTO CRUD de usuario.
 
 ## Seguridad y aspectos que requieren confirmación
 
