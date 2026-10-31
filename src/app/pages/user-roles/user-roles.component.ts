@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { forkJoin, Observable, of } from 'rxjs';
+import { EMPTY, forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Role } from 'src/app/models/role.model';
 import { User } from 'src/app/models/user.model';
-import { UserRole } from 'src/app/models/user-role.model';
+import { UserRole, UserRoleReference } from 'src/app/models/user-role.model';
 import { UserRoleRequestDTO } from 'src/app/models/dtos/user-role-request.dto';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { RoleService } from 'src/app/services/role.service';
@@ -32,6 +32,7 @@ export class UserRolesComponent implements OnInit {
   public isLoading = false;
   public isSaving = false;
   public confirmRemovalOpen = false;
+  public assignmentLoadError: string | null = null;
 
   private assignments: UserRole[] = [];
 
@@ -77,17 +78,21 @@ export class UserRolesComponent implements OnInit {
     this.assignments = [];
     this.assignedUsers = [];
     this.availableUsers = [];
+    this.assignmentLoadError = null;
     this.isLoading = true;
 
     this.userRoleService
       .findByRoleId(role.id)
       .pipe(
         catchError(() => {
+          const message =
+            'Could not load this role assignments. Check your session and try again.';
+          this.assignmentLoadError = message;
           this.feedbackHandlerService.error(
             FeedbackCase.SERVER_ERROR,
-            'Could not load users assigned to this role.'
+            message
           );
-          return of([] as UserRole[]);
+          return EMPTY;
         }),
         finalize(() => (this.isLoading = false))
       )
@@ -98,6 +103,10 @@ export class UserRolesComponent implements OnInit {
   }
 
   public toggleUser(userId: number): void {
+    if (this.isAssigned(userId)) {
+      return;
+    }
+
     if (this.selectedUserIds.has(userId)) {
       this.selectedUserIds.delete(userId);
     } else {
@@ -187,9 +196,17 @@ export class UserRolesComponent implements OnInit {
     return this.selectedUserIds.has(userId);
   }
 
+  public isAssigned(userId: number): boolean {
+    return this.assignments.some(
+      (assignment) => this.getAssignmentUserId(assignment) === userId
+    );
+  }
+
   private refreshUserLists(): void {
     const assignedIds = new Set(
-      this.assignments.map((assignment) => assignment.user)
+      this.assignments
+        .map((assignment) => this.getAssignmentUserId(assignment))
+        .filter((userId): userId is number => userId !== undefined)
     );
     this.assignedUsers = this.users.filter((user) => assignedIds.has(user.id));
     this.availableUsers = this.users.filter((user) => !assignedIds.has(user.id));
@@ -198,6 +215,16 @@ export class UserRolesComponent implements OnInit {
         this.availableUsers.some((user) => user.id === id)
       )
     );
+  }
+
+  private getReferenceId(reference: UserRoleReference | undefined): number | undefined {
+    const id = typeof reference === 'number' ? reference : reference?.id;
+    return id === undefined ? undefined : Number(id);
+  }
+
+  private getAssignmentUserId(assignment: UserRole): number | undefined {
+    const userId = assignment.userId ?? this.getReferenceId(assignment.user);
+    return userId === undefined ? undefined : Number(userId);
   }
 
 }
