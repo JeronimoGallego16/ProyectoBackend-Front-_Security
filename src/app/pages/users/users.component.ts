@@ -13,6 +13,7 @@ import {
   DataTableComponent,
   TableColumn,
 } from 'src/app/components/table-list/table-list.component';
+import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import {
   DynamicFormComponent,
   FormFieldConfig,
@@ -41,6 +42,7 @@ const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])\S{8,72}$
     MaterialModule,
     ReactiveFormsModule,
     DataTableComponent,
+    DetailDialogComponent,
     DynamicFormComponent,
     ConfirmDialogComponent,
   ],
@@ -83,6 +85,12 @@ export class UsersComponent implements OnInit {
   public showForm = false;
   public isEditing = false;
   public selectedUser: User | null = null;
+  public detailOpen = false;
+  public readonly detailFields = [
+    { key: 'id', label: 'ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+  ];
   public confirmDeleteOpen = false;
   public pendingDeleteUser: User | null = null;
   private editingUserId: number | null = null;
@@ -120,6 +128,7 @@ export class UsersComponent implements OnInit {
 
   public onCreateClick(): void {
     this.selectedUser = null;
+    this.detailOpen = false;
     this.isEditing = false;
     this.editingUserId = null;
     this.userForm.reset({ name: '', email: '', password: '' });
@@ -133,6 +142,7 @@ export class UsersComponent implements OnInit {
 
   public onEdit(user: User): void {
     this.selectedUser = null;
+    this.detailOpen = false;
     this.isEditing = true;
     this.editingUserId = user.id;
     this.userForm.reset({ name: user.name, email: user.email, password: '' });
@@ -155,6 +165,7 @@ export class UsersComponent implements OnInit {
             name: details.name,
             email: details.email,
           };
+          this.detailOpen = true;
           this.showForm = false;
         },
         error: (error) =>
@@ -163,6 +174,14 @@ export class UsersComponent implements OnInit {
             'Could not load user details.'
           ),
       });
+  }
+
+  /**
+   * Closes the user detail dialog and clears its selected data.
+   */
+  public onCloseDetail(): void {
+    this.detailOpen = false;
+    this.selectedUser = null;
   }
 
   public onDelete(user: User): void {
@@ -264,10 +283,6 @@ export class UsersComponent implements OnInit {
     this.userForm.reset({ name: '', email: '', password: '' });
     this.userForm.controls.password.clearValidators();
     this.userForm.controls.password.updateValueAndValidity();
-  }
-
-  public closeDetails(): void {
-    this.selectedUser = null;
   }
 
   private buildUpdatePayload(name: string, email: string, password: string): UpdateUserDTO {

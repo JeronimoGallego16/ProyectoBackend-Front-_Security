@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize, forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SelectableTableComponent } from 'src/app/components/selectable-table/selectable-table.component';
 import { MaterialModule } from 'src/app/material.module';
+import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Permission } from 'src/app/models/permission.model';
 import { Role } from 'src/app/models/role.model';
 import { RolePermissionDetail } from 'src/app/models/role-detail-with-permissions.model';
 import { RolePermissionRequestDTO } from 'src/app/models/dtos/role-permission-request.dto';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RolePermissionService } from 'src/app/services/role-permission.service';
 import { RoleService } from 'src/app/services/role.service';
@@ -54,13 +55,13 @@ export class RolePermissionsComponent implements OnInit {
   /**
    * Creates an instance of the role permissions page.
    *
-   * @param snackBar - Angular Material service used to show user feedback.
+   * @param feedbackHandlerService - Service that publishes user feedback notifications.
    * @param permissionService - Service that provides permission data access.
    * @param rolePermissionService - Service that manages role-permission assignments.
    * @param roleService - Service that provides role data access.
    */
   constructor(
-    private readonly snackBar: MatSnackBar,
+    private readonly feedbackHandlerService: FeedbackHandlerService,
     private readonly permissionService: PermissionService,
     private readonly rolePermissionService: RolePermissionService,
     private readonly roleService: RoleService
@@ -80,15 +81,21 @@ export class RolePermissionsComponent implements OnInit {
     this.isLoading = true;
 
     const roles$ = this.roleService.findAll().pipe(
-      catchError(() => {
-        this.showMessage('Could not load roles. Please try again.');
+      catchError((error) => {
+        this.feedbackHandlerService.error(
+          String(error?.status ?? FeedbackCase.SERVER_ERROR),
+          'Could not load roles. Please try again.'
+        );
         return of([] as Role[]);
       })
     );
 
     const permissions$ = this.permissionService.findAll().pipe(
-      catchError(() => {
-        this.showMessage('Could not load permissions. Please try again.');
+      catchError((error) => {
+        this.feedbackHandlerService.error(
+          String(error?.status ?? FeedbackCase.SERVER_ERROR),
+          'Could not load permissions. Please try again.'
+        );
         return of([] as Permission[]);
       })
     );
@@ -161,8 +168,11 @@ export class RolePermissionsComponent implements OnInit {
     this.roleService
       .findByIdWithPermissions(roleId)
       .pipe(
-        catchError(() => {
-          this.showMessage('Could not load role details. Please try again.');
+        catchError((error) => {
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            'Could not load role details. Please try again.'
+          );
           return of(null);
         }),
         finalize(() => (this.isLoading = false))
@@ -213,7 +223,7 @@ export class RolePermissionsComponent implements OnInit {
    */
   public onAssignPermissions(): void {
     if (this.roleId === null) {
-      this.showMessage('Select a role first.');
+      this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Select a role first.');
       return;
     }
 
@@ -252,7 +262,7 @@ export class RolePermissionsComponent implements OnInit {
     const operations: Observable<any>[] = [...createObservables, ...deleteObservables];
 
     if (operations.length === 0) {
-      this.showMessage('No changes to apply.');
+      this.feedbackHandlerService.info(FeedbackCase.INFO, 'No changes to apply.');
       this.isSaving = false;
       return;
     }
@@ -261,23 +271,17 @@ export class RolePermissionsComponent implements OnInit {
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
         next: () => {
-          this.showMessage('Permissions updated successfully.');
+          this.feedbackHandlerService.success(
+            FeedbackCase.OK,
+            'Permissions updated successfully.'
+          );
           this.loadRolePermissions(this.roleId!);
         },
-        error: () => {
-          this.showMessage('Could not update permissions. Please try again.');
-        },
+        error: (error) =>
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            'Could not update permissions. Please try again.'
+          ),
       });
-  }
-
-  /**
-   * Shows a short notification message to the user.
-   */
-  private showMessage(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-    });
   }
 }

@@ -7,18 +7,6 @@
     </button>
   </div>
 
-  @if (selectedUser) {
-    <section class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4" aria-labelledby="user-details-title">
-      <h2 id="user-details-title" class="mb-2 text-lg font-semibold text-gray-900">User details</h2>
-      <p class="text-sm text-gray-700"><strong>ID:</strong> {{ selectedUser.id }}</p>
-      <p class="text-sm text-gray-700"><strong>Name:</strong> {{ selectedUser.name }}</p>
-      <p class="text-sm text-gray-700"><strong>Email:</strong> {{ selectedUser.email }}</p>
-      <div class="mt-4 flex justify-end">
-        <button mat-stroked-button type="button" (click)="closeDetails()">Back to users</button>
-      </div>
-    </section>
-  }
-
   @if (showForm) {
     <div class="mb-6">
       <app-dynamic-form
@@ -54,4 +42,12 @@
     (confirm)="onConfirmDelete()"
     (cancel)="onCancelDelete()"
   ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="User details"
+    [data]="selectedUser"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
 </div>

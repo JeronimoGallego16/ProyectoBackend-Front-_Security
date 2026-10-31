@@ -19,6 +19,7 @@ import {
   FormFieldConfig,
 } from 'src/app/components/dynamic-form/dynamic-form.component';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
+import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import { MaterialModule } from 'src/app/material.module';
 import { RoleRequestDTO } from 'src/app/models/dtos/role-request.dto';
 import { Role } from 'src/app/models/role.model';
@@ -36,6 +37,7 @@ import { FeedbackCase } from 'src/app/models/feedback-case';
     DataTableComponent,
     DynamicFormComponent,
     ConfirmDialogComponent,
+    DetailDialogComponent,
   ],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
@@ -75,6 +77,13 @@ export class RolesComponent implements OnInit {
   public confirmDeleteOpen = false;
   private editingRoleId: number | null = null;
   public pendingDeleteRole: Role | null = null;
+  public detailOpen = false;
+  public selectedRole: Role | null = null;
+  public readonly detailFields = [
+    { key: 'id', label: 'ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'description', label: 'Description' },
+  ];
 
   /**
    * Creates an instance of the roles page.
@@ -133,7 +142,13 @@ export class RolesComponent implements OnInit {
   }
 
   public onView(role: Role): void {
-    this.feedbackHandlerService.info(FeedbackCase.OK, `Role #${role.id}: ${role.name} - ${role.description}`);
+    this.selectedRole = role;
+    this.detailOpen = true;
+  }
+
+  public onCloseDetail(): void {
+    this.detailOpen = false;
+    this.selectedRole = null;
   }
 
   public onDelete(role: Role): void {

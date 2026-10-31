@@ -43,4 +43,12 @@
     (confirm)="onConfirmDelete()"
     (cancel)="onCancelDelete()"
   ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Role details"
+    [data]="selectedRole"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
 </div>
