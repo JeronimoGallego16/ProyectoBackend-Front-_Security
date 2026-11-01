@@ -1,0 +1,102 @@
+<div class="flex min-h-screen w-full items-center justify-center overflow-auto p-2">
+  <mat-card class="cardWithShadow mx-auto mb-0 max-w-4xl overflow-hidden auth-card">
+    <div class="grid grid-cols-12 gap-6">
+      <div class="col-span-12 flex items-stretch lg:col-span-7">
+        <div class="flex w-full flex-col justify-center p-8 sm:p-10">
+          <p class="mb-2 text-sm font-medium text-primary">Welcome{{ session ? ', ' + session.name : '' }}</p>
+          <h1 class="text-2xl font-bold text-gray-800">Complete your profile</h1>
+          <p class="mt-2 text-sm text-gray-600">
+            Add your contact details so your account is ready to use.
+          </p>
+
+          <form class="mt-8" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Phone number</mat-label>
+            <mat-form-field appearance="outline" class="w-full" color="primary">
+              <input matInput type="tel" formControlName="phone" autocomplete="tel" />
+              @if (form.controls.phone.touched && form.controls.phone.hasError('required')) {
+                <mat-error>Phone number is required.</mat-error>
+              } @else if (form.controls.phone.touched && form.controls.phone.hasError('maxlength')) {
+                <mat-error>Phone number must not exceed 30 characters.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Date of birth</mat-label>
+            <mat-form-field appearance="outline" class="w-full" color="primary">
+              <input
+                matInput
+                formControlName="birthDate"
+                [matDatepicker]="birthDatePicker"
+                [max]="today"
+              />
+              <mat-datepicker-toggle matSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #birthDatePicker></mat-datepicker>
+              @if (form.controls.birthDate.touched && form.controls.birthDate.hasError('required')) {
+                <mat-error>Date of birth is required.</mat-error>
+              } @else if (form.controls.birthDate.hasError('futureDate')) {
+                <mat-error>Date of birth cannot be in the future.</mat-error>
+              }
+            </mat-form-field>
+
+            <input
+              id="setup-profile-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="hidden"
+              [disabled]="isSaving"
+              (change)="onImageSelected($event)"
+            />
+            <label
+              for="setup-profile-image"
+              class="mt-4 flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-100 text-gray-500 transition hover:border-primary hover:bg-gray-200"
+              [class.pointer-events-none]="isSaving"
+              [class.opacity-60]="isSaving"
+              title="Choose profile photo"
+            >
+              @if (imagePreviewUrl; as previewUrl) {
+                <img class="h-full w-full object-cover" [src]="previewUrl" alt="Profile preview" />
+              } @else {
+                <span class="flex flex-col items-center text-center text-xs">
+                  <mat-icon>add_a_photo</mat-icon>
+                  Choose photo
+                </span>
+              }
+            </label>
+            <p class="mt-1 text-xs text-gray-500">Optional. JPG, PNG or WEBP, maximum 5 MB.</p>
+            @if (imageError) {
+              <p class="mt-2 text-sm text-red-600">{{ imageError }}</p>
+            }
+
+            @if (submitError) {
+              <div class="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {{ submitError }}
+              </div>
+            }
+
+            <button mat-flat-button color="primary" class="mt-6 w-full" type="submit" [disabled]="isLoading || isSaving">
+              @if (isSaving) {
+                <mat-spinner diameter="20"></mat-spinner>
+                <span>Saving profile...</span>
+              } @else {
+                Continue
+              }
+            </button>
+            <button
+              mat-button
+              class="mt-2 w-full"
+              type="button"
+              [disabled]="isLoading || isSaving"
+              (click)="skip()"
+            >
+              Skip for now
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="relative col-span-12 hidden items-stretch bg-light p-5 lg:col-span-5 lg:flex">
+        <div class="flex w-full items-center justify-center">
+          <img src="/assets/images/backgrounds/login-bg.svg" alt="Complete your profile" class="img-fluid object-cover" />
+        </div>
+      </div>
+    </div>
+  </mat-card>
+</div>

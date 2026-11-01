@@ -15,6 +15,7 @@ import { OAuthService } from 'src/app/services/oauth.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { OAuthResult } from 'src/app/models/oauth/oauth-result.model';
+import { AuthSession } from 'src/app/models/auth-response.model';
 
 @Component({
   selector: 'app-side-login',
@@ -60,7 +61,12 @@ export class AppSideLoginComponent implements OnInit {
       .login(this.form.getRawValue())
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: (session) => {
+          this.authService.getPostAuthenticationRoute(session).subscribe({
+            next: (route) => void this.router.navigate([route]),
+            error: (error) => this.handleLoginError(error),
+          });
+        },
         error: (error) => {
           this.handleLoginError(error);
         },
@@ -149,8 +155,15 @@ export class AppSideLoginComponent implements OnInit {
    * @param idToken - Firebase ID token issued after a successful OAuth flow.
    */
   private async authenticateWithBackend(idToken: string): Promise<void> {
-    await firstValueFrom(this.authService.loginWithOAuth({ idToken }));
-    await this.router.navigate(['/dashboard']);
+    const session = await firstValueFrom(this.authService.loginWithOAuth({ idToken }));
+    await this.navigateAfterAuthentication(session);
+  }
+
+  private async navigateAfterAuthentication(
+    session: AuthSession
+  ): Promise<void> {
+    const route = await firstValueFrom(this.authService.getPostAuthenticationRoute(session));
+    await this.router.navigate([route]);
   }
 
   /**

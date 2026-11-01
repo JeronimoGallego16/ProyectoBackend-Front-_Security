@@ -80,6 +80,14 @@ export const routes: Routes = [
             (m) => m.AuthenticationRoutes
           ),
       },
+      {
+        path: 'profile-setup',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./pages/profile-setup/profile-setup.component').then(
+            (m) => m.ProfileSetupComponent
+          ),
+      },
     ],
   },
   {

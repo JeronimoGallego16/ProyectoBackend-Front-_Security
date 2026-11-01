@@ -39,6 +39,7 @@ describe('AppSideLoginComponent', () => {
     authService = jasmine.createSpyObj<AuthService>('AuthService', [
       'login',
       'loginWithOAuth',
+      'getPostAuthenticationRoute',
     ]);
     oauthService = jasmine.createSpyObj<OAuthService>('OAuthService', [
       'loginWithGoogle',
@@ -51,6 +52,7 @@ describe('AppSideLoginComponent', () => {
       ['error']
     );
     oauthService.handleMicrosoftRedirect.and.resolveTo(null);
+    authService.getPostAuthenticationRoute.and.returnValue(of('/dashboard'));
 
     await TestBed.configureTestingModule({
       providers: [

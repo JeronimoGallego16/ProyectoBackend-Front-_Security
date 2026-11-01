@@ -74,7 +74,12 @@ export class AppSideRegisterComponent {
       .register({ name, email, password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => void this.router.navigate(['/dashboard']),
+        next: (session) => {
+          this.authService.getPostAuthenticationRoute(session).subscribe({
+            next: (route) => void this.router.navigate([route]),
+            error: (error) => this.handleRegistrationError(error),
+          });
+        },
         error: (error: unknown) => this.handleRegistrationError(error),
       });
   }

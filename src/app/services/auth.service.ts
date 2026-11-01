@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap, throwError } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { AuthSession } from '../models/auth-response.model';
 import { LoginRequestDTO } from '../models/dtos/login-request.dto';
 import { OAuthLoginRequestDTO } from '../models/dtos/oauth-login-request.dto';
 import { CsrfService } from './csrf.service';
+import { ProfileService } from './profile.service';
 
 export interface RegisterRequestDTO {
   name: string;
@@ -20,7 +21,8 @@ export class AuthService {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly csrfService: CsrfService
+    private readonly csrfService: CsrfService,
+    private readonly profileService: ProfileService
   ) {}
 
   public login(credentials: LoginRequestDTO): Observable<AuthSession> {
@@ -63,6 +65,17 @@ export class AuthService {
     return this.http.get<AuthSession>(`${this.authUrl}/session`, {
       withCredentials: true,
     }).pipe(tap((session) => (this.currentSession = session)));
+  }
+
+  public getPostAuthenticationRoute(session: AuthSession): Observable<string> {
+    return this.profileService.findByUserId(session.id).pipe(
+      map(() => '/dashboard'),
+      catchError((error: { status?: number }) =>
+        error?.status === 404
+        ? of('/profile-setup')
+        : throwError(() => error)
+      )
+    );
   }
 
   public logout(): Observable<void> {
