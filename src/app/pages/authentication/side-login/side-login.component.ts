@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
 import { finalize, firstValueFrom } from 'rxjs';
-import { AuthService } from 'src/app/services/auth.service';
+import { AuthService, AuthenticationResult } from 'src/app/services/auth.service';
 import { OAuthService } from 'src/app/services/oauth.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
@@ -61,8 +61,12 @@ export class AppSideLoginComponent implements OnInit {
       .login(this.form.getRawValue())
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (session) => {
-          this.authService.getPostAuthenticationRoute(session).subscribe({
+        next: (result) => {
+          if (this.isTwoFactorChallenge(result)) {
+            void this.router.navigate(['/authentication/verify-2fa']);
+            return;
+          }
+          this.authService.getPostAuthenticationRoute(result).subscribe({
             next: (route) => void this.router.navigate([route]),
             error: (error) => this.handleLoginError(error),
           });
@@ -164,6 +168,13 @@ export class AppSideLoginComponent implements OnInit {
   ): Promise<void> {
     const route = await firstValueFrom(this.authService.getPostAuthenticationRoute(session));
     await this.router.navigate([route]);
+  }
+
+  private isTwoFactorChallenge(result: AuthenticationResult): result is {
+    challengeId: string;
+    expiresAt: string;
+  } {
+    return 'challengeId' in result;
   }
 
   /**

@@ -13,6 +13,7 @@ import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 import { MaterialModule } from 'src/app/material.module';
 import { AuthService } from 'src/app/services/auth.service';
+import { AuthenticationResult } from 'src/app/services/auth.service';
 
 const passwordPattern =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,72}$/;
@@ -74,8 +75,12 @@ export class AppSideRegisterComponent {
       .register({ name, email, password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (session) => {
-          this.authService.getPostAuthenticationRoute(session).subscribe({
+        next: (result) => {
+          if (this.isTwoFactorChallenge(result)) {
+            void this.router.navigate(['/authentication/verify-2fa']);
+            return;
+          }
+          this.authService.getPostAuthenticationRoute(result).subscribe({
             next: (route) => void this.router.navigate([route]),
             error: (error) => this.handleRegistrationError(error),
           });
@@ -90,6 +95,13 @@ export class AppSideRegisterComponent {
 
   public toggleConfirmationVisibility(): void {
     this.isConfirmationVisible = !this.isConfirmationVisible;
+  }
+
+  private isTwoFactorChallenge(result: AuthenticationResult): result is {
+    challengeId: string;
+    expiresAt: string;
+  } {
+    return 'challengeId' in result;
   }
 
   private handleRegistrationError(error: unknown): void {

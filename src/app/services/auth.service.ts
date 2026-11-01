@@ -14,10 +14,18 @@ export interface RegisterRequestDTO {
   password: string;
 }
 
+export interface TwoFactorChallenge {
+  challengeId: string;
+  expiresAt: string;
+}
+
+export type AuthenticationResult = AuthSession | TwoFactorChallenge;
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authUrl = `${environment.apiUrl}/api/auth`;
   private currentSession: AuthSession | null = null;
+  private pendingTwoFactor: { challenge: TwoFactorChallenge; email: string } | null = null;
 
   constructor(
     private readonly http: HttpClient,
@@ -25,15 +33,18 @@ export class AuthService {
     private readonly profileService: ProfileService
   ) {}
 
-  public login(credentials: LoginRequestDTO): Observable<AuthSession> {
+  public login(credentials: LoginRequestDTO): Observable<AuthenticationResult> {
     return this.http
       .post<void>(`${this.authUrl}/login`, credentials, {
         withCredentials: true,
       })
-      .pipe(switchMap(() => this.getSession()));
+      .pipe(
+        switchMap(() => this.getSession()),
+        catchError((error) => this.challengeFromError(error, credentials.email))
+      );
   }
 
-  public register(credentials: RegisterRequestDTO): Observable<AuthSession> {
+  public register(credentials: RegisterRequestDTO): Observable<AuthenticationResult> {
     return this.csrfService.getToken().pipe(
       switchMap((token) =>
         this.http.post<void>(`${this.authUrl}/register`, credentials, {
@@ -41,7 +52,35 @@ export class AuthService {
           headers: { 'X-XSRF-TOKEN': token },
         })
       ),
-      switchMap(() => this.getSession())
+      switchMap(() => this.getSession()),
+      catchError((error) => this.challengeFromError(error, credentials.email))
+    );
+  }
+
+  public getPendingTwoFactor(): { challenge: TwoFactorChallenge; email: string } | null {
+    return this.pendingTwoFactor;
+  }
+
+  public setPendingTwoFactor(challenge: TwoFactorChallenge, email: string): void {
+    this.pendingTwoFactor = { challenge, email };
+  }
+
+  public clearPendingTwoFactor(): void {
+    this.pendingTwoFactor = null;
+  }
+
+  public verifyTwoFactor(challengeId: string, code: string): Observable<AuthSession> {
+    return this.postTwoFactorVerification(challengeId, code).pipe(
+      catchError((error) => {
+        if (error?.status !== 403) {
+          return throwError(() => error);
+        }
+
+        this.csrfService.clearToken();
+        return this.postTwoFactorVerification(challengeId, code);
+      }),
+      switchMap(() => this.getSession()),
+      tap(() => this.clearPendingTwoFactor())
     );
   }
 
@@ -91,5 +130,36 @@ export class AuthService {
 
   public getCurrentSession(): AuthSession | null {
     return this.currentSession;
+  }
+
+  private postTwoFactorVerification(
+    challengeId: string,
+    code: string
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.authUrl}/2fa/verify`,
+      { challengeId, code },
+      { withCredentials: true }
+    );
+  }
+
+  private challengeFromError(
+    error: { status?: number; error?: unknown },
+    email: string
+  ): Observable<AuthenticationResult> {
+    const body = error?.error;
+    if (
+      error?.status === 401
+      && typeof body === 'object'
+      && body !== null
+      && typeof (body as { challengeId?: unknown }).challengeId === 'string'
+      && typeof (body as { expiresAt?: unknown }).expiresAt === 'string'
+    ) {
+      const challenge = body as TwoFactorChallenge;
+      this.setPendingTwoFactor(challenge, email);
+      return of(challenge);
+    }
+
+    return throwError(() => error);
   }
 }
