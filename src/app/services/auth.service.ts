@@ -7,6 +7,12 @@ import { LoginRequestDTO } from '../models/dtos/login-request.dto';
 import { OAuthLoginRequestDTO } from '../models/dtos/oauth-login-request.dto';
 import { CsrfService } from './csrf.service';
 
+export interface RegisterRequestDTO {
+  name: string;
+  email: string;
+  password: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authUrl = `${environment.apiUrl}/api/auth`;
@@ -23,6 +29,18 @@ export class AuthService {
         withCredentials: true,
       })
       .pipe(switchMap(() => this.getSession()));
+  }
+
+  public register(credentials: RegisterRequestDTO): Observable<AuthSession> {
+    return this.csrfService.getToken().pipe(
+      switchMap((token) =>
+        this.http.post<void>(`${this.authUrl}/register`, credentials, {
+          withCredentials: true,
+          headers: { 'X-XSRF-TOKEN': token },
+        })
+      ),
+      switchMap(() => this.getSession())
+    );
   }
 
   /**

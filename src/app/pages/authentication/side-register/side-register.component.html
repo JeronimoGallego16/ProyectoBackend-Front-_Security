@@ -1,39 +1,112 @@
-<div class="flex h-screen w-full items-center justify-center overflow-hidden p-2">
-  <mat-card class="cardWithShadow overflow-hidden auth-card mx-auto mb-0">
+<div class="flex min-h-screen w-full items-center justify-center overflow-auto p-2">
+  <mat-card class="cardWithShadow mx-auto mb-0 overflow-hidden auth-card">
     <div class="grid grid-cols-12 gap-6">
-      <div class="lg:col-span-6 col-span-12 flex items-stretch">
-        <div class="w-full p-10 flex flex-col justify-center aling-center">
-          <div class="text-center">Your Social Campaigns</div>
+      <div class="col-span-12 flex items-stretch lg:col-span-6">
+        <div class="flex w-full flex-col justify-center p-10">
+          <div class="text-center text-xl font-semibold">Create your account</div>
 
-          <form class="mt-8">
-            <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block">Name</mat-label>
+          <form class="mt-8" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Name</mat-label>
             <mat-form-field appearance="outline" class="w-full" color="primary">
-              <input matInput />
-            </mat-form-field>
-            <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block">Email Adddress</mat-label>
-            <mat-form-field appearance="outline" class="w-full" color="primary">
-              <input matInput type="email" />
-            </mat-form-field>
-
-            <mat-label class="mat-subtitle-2 text-sm font-semibold mb-3 block">Password</mat-label>
-            <mat-form-field appearance="outline" class="w-full" color="primary">
-              <input matInput type="password" />
+              <input matInput type="text" formControlName="name" autocomplete="name" />
+              @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+                <mat-error>Name is required.</mat-error>
+              } @else if (form.controls.name.touched && form.controls.name.hasError('minlength')) {
+                <mat-error>Name must have at least 2 characters.</mat-error>
+              }
             </mat-form-field>
 
-            <a [routerLink]="['/']" mat-flat-button color="primary" class="w-full">
-              Sign Up
-            </a>
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Email</mat-label>
+            <mat-form-field appearance="outline" class="w-full" color="primary">
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+              @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+                <mat-error>Email is required.</mat-error>
+              } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Password</mat-label>
+            <mat-form-field appearance="outline" class="w-full" color="primary">
+              <input
+                matInput
+                [type]="isPasswordVisible ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="isPasswordVisible ? 'Hide password' : 'Show password'"
+                (click)="togglePasswordVisibility()"
+              >
+                <mat-icon>{{ isPasswordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+                <mat-error>Password is required.</mat-error>
+              } @else if (form.controls.password.touched && form.controls.password.hasError('pattern')) {
+                <mat-error>Password must be 8-72 characters with uppercase, lowercase, number, special character, and no spaces.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-label class="mat-subtitle-2 mb-3 block text-start text-sm font-semibold">Confirm password</mat-label>
+            <mat-form-field appearance="outline" class="w-full" color="primary">
+              <input
+                matInput
+                [type]="isConfirmationVisible ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="isConfirmationVisible ? 'Hide password confirmation' : 'Show password confirmation'"
+                (click)="toggleConfirmationVisibility()"
+              >
+                <mat-icon>{{ isConfirmationVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')) {
+                <mat-error>Password confirmation is required.</mat-error>
+              } @else if (form.controls.confirmPassword.touched && form.hasError('passwordsMismatch')) {
+                <mat-error>Passwords do not match.</mat-error>
+              }
+            </mat-form-field>
+
+            @if (submitError) {
+              <div class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {{ submitError }}
+              </div>
+            }
+
+            <button
+              mat-flat-button
+              color="primary"
+              class="w-full"
+              type="submit"
+              [disabled]="isLoading"
+            >
+              @if (isLoading) {
+                <mat-spinner diameter="20"></mat-spinner>
+                <span>Registering...</span>
+              } @else {
+                Sign Up
+              }
+            </button>
           </form>
-          <span class="block font-medium text-center mt-6">Already have an Account?
 
-            <a [routerLink]="['/authentication/login']" class="no-underline text-primary font-medium text-sm">
-              Sign In</a>
+          <span class="mt-6 block text-center font-medium">
+            Already have an account?
+            <a routerLink="/authentication/login" class="text-primary no-underline font-medium text-sm">
+              Sign In
+            </a>
           </span>
         </div>
       </div>
-      <div class="lg:col-span-6 col-span-12 relative hidden lg:flex justify-center items-stretch bg-light p-5">
-        <div class="flex items-center justify-center w-full">
-          <img src="/assets/images/backgrounds/login-bg.svg" alt="login" class="img-fluid object-cover" />
+      <div class="relative col-span-12 hidden items-stretch bg-light p-5 lg:col-span-6 lg:flex">
+        <div class="flex w-full items-center justify-center">
+          <img src="/assets/images/backgrounds/login-bg.svg" alt="Registration" class="img-fluid object-cover" />
         </div>
       </div>
     </div>
