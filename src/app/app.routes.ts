@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { authGuard } from './services/auth.guard';
+import { roleGuard } from './services/role.guard';
+import { AccessDeniedComponent } from './pages/access-denied/access-denied.component';
 
 export const routes: Routes = [
   {
@@ -20,24 +22,16 @@ export const routes: Routes = [
           import('./pages/pages.routes').then((m) => m.PagesRoutes),
       },
       {
-        path: 'ui-components',
-        loadChildren: () =>
-          import('./pages/ui-components/ui-components.routes').then(
-            (m) => m.UiComponentsRoutes
-          ),
-      },
-      {
-        path: 'extra',
-        loadChildren: () =>
-          import('./pages/extra/extra.routes').then((m) => m.ExtraRoutes),
-      },
-      {
         path: 'roles',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/roles/roles.component').then((m) => m.RolesComponent),
       },
       {
         path: 'permissions',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/permissions/permissions.component').then(
             (m) => m.PermissionsComponent
@@ -45,6 +39,8 @@ export const routes: Routes = [
       },
       {
         path: 'role-permissions',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadChildren: () =>
           import('./pages/role-permissions/role-permissions.routes').then(
             (m) => m.RolePermissionsRoutes
@@ -52,6 +48,8 @@ export const routes: Routes = [
       },
       {
         path: 'user-roles',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadChildren: () =>
           import('./pages/user-roles/user-roles.routes').then(
             (m) => m.UserRolesRoutes
@@ -64,6 +62,8 @@ export const routes: Routes = [
       },
       {
         path: 'users',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/users/users.component').then((m) => m.UsersComponent),
       }
@@ -73,6 +73,10 @@ export const routes: Routes = [
     path: '',
     component: BlankComponent,
     children: [
+      {
+        path: 'access-denied',
+        component: AccessDeniedComponent,
+      },
       {
         path: 'authentication',
         loadChildren: () =>

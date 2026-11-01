@@ -10,12 +10,16 @@ import { NavService } from '../../services/nav.service';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { HeaderComponent } from './header/header.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { AppNavItemComponent } from './sidebar/nav-item/nav-item.component';
 import { navItems } from './sidebar/sidebar-data';
+import { AuthorizationService } from 'src/app/services/authorization.service';
+import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
+import { NavItem } from './sidebar/nav-item/nav-item';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -54,7 +58,7 @@ interface quicklinks {
   encapsulation: ViewEncapsulation.None
 })
 export class FullComponent implements OnInit {
-  navItems = navItems;
+  navItems: NavItem[] = navItems.filter((item) => !item.requiredRole);
 
 
 
@@ -186,7 +190,9 @@ export class FullComponent implements OnInit {
     private mediaMatcher: MediaMatcher,
     private router: Router,
     private breakpointObserver: BreakpointObserver,
-    private navService: NavService, private cdr: ChangeDetectorRef
+    private navService: NavService, private cdr: ChangeDetectorRef,
+    private authorizationService: AuthorizationService,
+    private feedbackHandlerService: FeedbackHandlerService
   ) {
     this.htmlElement = document.querySelector('html')!;
     this.layoutChangesSubscription = this.breakpointObserver
@@ -221,7 +227,25 @@ export class FullComponent implements OnInit {
     this.cdr.detectChanges(); // Ensures Angular updates the view
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    this.authorizationService.getCurrentUserRoles().subscribe({
+      next: (roles) => {
+        this.navItems = navItems.filter(
+          (item) =>
+            !item.requiredRole ||
+            this.authorizationService.hasRole(roles, item.requiredRole)
+        );
+      },
+      error: (error: unknown) => {
+        const status =
+          error instanceof HttpErrorResponse ? String(error.status) : '500';
+        this.feedbackHandlerService.error(
+          status,
+          'Could not load role-based navigation. Restricted links are hidden.'
+        );
+      },
+    });
+  }
 
   ngOnDestroy() {
     this.layoutChangesSubscription.unsubscribe();

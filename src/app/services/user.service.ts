@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { CreateUserDTO } from '../models/dtos/create-user.dto';
 import { UpdateUserDTO } from '../models/dtos/update-user.dto';
+import { UserRolesResponse } from '../models/user-roles-response.model';
 import { User } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
@@ -18,6 +19,18 @@ export class UserService {
 
   public findById(id: number): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/${id}`, { withCredentials: true });
+  }
+
+  /**
+   * Retrieves the roles assigned to the authenticated user.
+   *
+   * @returns Observable containing the authenticated user's role names.
+   */
+  public findMyRoles(): Observable<UserRolesResponse> {
+    return this.http.get<UserRolesResponse>(
+      `${this.baseUrl}/me/roles`,
+      { withCredentials: true }
+    );
   }
 
   public create(user: CreateUserDTO): Observable<User> {

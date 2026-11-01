@@ -57,4 +57,19 @@ describe('UserService', () => {
       url: `${baseUrl}/${user.id}`,
     }).flush(null);
   });
+
+  it('retrieves the authenticated user roles without requesting a user ID', () => {
+    const rolesResponse = { roles: ['ADMIN'] };
+
+    service.findMyRoles().subscribe((result) => {
+      expect(result).toEqual(rolesResponse);
+    });
+
+    const request = httpTestingController.expectOne({
+      method: 'GET',
+      url: `${baseUrl}/me/roles`,
+    });
+    expect(request.request.withCredentials).toBeTrue();
+    request.flush(rolesResponse);
+  });
 });
