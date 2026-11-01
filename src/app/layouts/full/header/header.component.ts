@@ -44,6 +44,13 @@ export class HeaderComponent {
     this.optionsChange.emit(this.options);
   }
 
+  /**
+   * Navigates to the profile page for the authenticated user.
+   */
+  public navigateToProfile(): void {
+    void this.router.navigate(['/profiles']);
+  }
+
   logout(): void {
     if (this.isLoggingOut) {
       return;
