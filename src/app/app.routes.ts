@@ -57,6 +57,8 @@ export const routes: Routes = [
       },
       {
         path: 'profiles',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
       },

@@ -11,6 +11,7 @@ export const navItems: NavItem[] = [
     displayName: 'Profiles',
     iconName: 'solar:user-circle-line-duotone',
     route: '/profiles',
+    requiredRole: 'ADMIN',
   },
   {
     displayName: 'Roles',
