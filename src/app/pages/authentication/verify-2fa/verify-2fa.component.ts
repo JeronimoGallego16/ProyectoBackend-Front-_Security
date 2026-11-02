@@ -62,7 +62,15 @@ export class Verify2faComponent implements OnInit, OnDestroy {
     this.authService
       .verifyTwoFactor(pending.challenge.challengeId, this.form.controls.code.value)
       .subscribe({
-        next: () => void this.router.navigate(['/dashboard']),
+        next: (session) => {
+          this.authService.getPostAuthenticationRoute(session).subscribe({
+            next: (route) => void this.router.navigate([route]),
+            error: () => {
+              this.isLoading = false;
+              this.errorMessage = 'No se pudo determinar la página inicial. Intenta nuevamente.';
+            },
+          });
+        },
         error: (error) => {
           this.isLoading = false;
           this.errorMessage = error?.status === 400
