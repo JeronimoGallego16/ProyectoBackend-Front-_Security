@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  OnInit,
   Output,
   EventEmitter,
   Input,
@@ -15,6 +16,9 @@ import { CoreService } from 'src/app/services/core.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
+import { ProfileService } from 'src/app/services/profile.service';
+import { Profile } from 'src/app/models/profile.model';
+import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -25,19 +29,37 @@ import { FeedbackCase } from 'src/app/models/feedback-case';
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Input() showToggle = true;
   @Output() toggleMobileNav = new EventEmitter<void>();
   @Output() optionsChange = new EventEmitter<AppSettings>();
   isLoggingOut = false;
+  public profileImageUrl: string | null = null;
   public options = this.settings.getOptions();
 
   constructor(
     private readonly settings: CoreService,
     private readonly authService: AuthService,
+    private readonly profileService: ProfileService,
     private readonly router: Router,
     private readonly feedbackHandlerService: FeedbackHandlerService
   ) {}
+
+  public ngOnInit(): void {
+    this.profileService.profileChanges$.subscribe((profile) => this.setProfileImage(profile));
+    this.authService.getSession().pipe(
+      catchError(() => of(null))
+    ).subscribe((session) => {
+      if (!session) return;
+      this.profileService.findByUserId(session.id).pipe(
+        catchError(() => of(null))
+      ).subscribe((profile) => this.setProfileImage(profile));
+    });
+  }
+
+  private setProfileImage(profile: Profile | null): void {
+    this.profileImageUrl = this.profileService.resolveImageUrl(profile?.profileImageUrl);
+  }
 
   public setLightDark(theme: 'light' | 'dark'): void {
     this.options = { ...this.options, theme };

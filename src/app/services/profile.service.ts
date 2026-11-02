@@ -1,13 +1,16 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, Subject, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { environment } from 'src/environment/environment';
 import { Profile } from '../models/profile.model';
 import { ProfileRequestDTO } from '../models/dtos/profile-request.dto';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
+  private readonly profileChangesSubject = new Subject<Profile | null>();
+  public readonly profileChanges$ = this.profileChangesSubject.asObservable();
+
   constructor(private readonly http: HttpClient) {}
 
   private profileUrl(userId: number): string {
@@ -15,15 +18,17 @@ export class ProfileService {
   }
 
   public findByUserId(userId: number): Observable<Profile> {
-    return this.http.get<Profile>(this.profileUrl(userId), { withCredentials: true });
+    return this.http.get<Profile>(this.profileUrl(userId), { withCredentials: true }).pipe(
+      tap((profile) => this.profileChangesSubject.next(profile))
+    );
   }
 
   public create(userId: number, profile: ProfileRequestDTO, image?: File): Observable<Profile> {
-    return this.mutate<Profile>('POST', userId, profile, image);
+    return this.mutate('POST', userId, profile, image);
   }
 
   public update(userId: number, profile: ProfileRequestDTO, image?: File): Observable<Profile> {
-    return this.mutate<Profile>('PUT', userId, profile, image);
+    return this.mutate('PUT', userId, profile, image);
   }
 
   public delete(userId: number): Observable<void> {
@@ -46,12 +51,12 @@ export class ProfileService {
     }
   }
 
-  private mutate<T>(
+  private mutate(
     method: 'POST' | 'PUT',
     userId: number,
     profile: ProfileRequestDTO,
     image?: File
-  ): Observable<T> {
+  ): Observable<Profile> {
     return this.withCsrfToken().pipe(
       switchMap((token) => {
         const body = image ? this.toMultipart(profile, image) : profile;
@@ -63,9 +68,14 @@ export class ProfileService {
             'X-XSRF-TOKEN': token,
           }),
         };
-        return method === 'POST'
-          ? this.http.post<T>(this.profileUrl(userId), body, options)
-          : this.http.put<T>(this.profileUrl(userId), body, options);
+        const request$ = method === 'POST'
+          ? this.http.post<Profile>(this.profileUrl(userId), body, options)
+          : this.http.put<Profile>(this.profileUrl(userId), body, options);
+        return request$.pipe(
+          tap((result) => {
+            this.profileChangesSubject.next(result);
+          })
+        );
       })
     );
   }
