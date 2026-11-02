@@ -43,5 +43,5 @@ Thumbs.db
 
 .front
 Agents.md
-
+/src/environment/environment.ts
 frontend_modulo_seguridad.md

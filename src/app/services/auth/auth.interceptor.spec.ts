@@ -91,4 +91,31 @@ describe('authInterceptor', () => {
 
     expect(navigateSpy).not.toHaveBeenCalled();
   });
+
+  it('does not clear the session or redirect on a rejected 2FA code', () => {
+    const session = { id: 1, email: 'user@example.com' };
+    authService.getSession().subscribe();
+    httpTestingController
+      .expectOne(`${environment.apiUrl}/api/auth/session`)
+      .flush(session);
+
+    const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(
+      Promise.resolve(true)
+    );
+    httpClient
+      .post(`${environment.apiUrl}/api/auth/2fa/verify`, {
+        challengeId: 'challenge-123',
+        code: '000000',
+      })
+      .subscribe({ error: () => undefined });
+
+    httpTestingController.expectOne(`${environment.apiUrl}/api/auth/csrf`)
+      .flush({ token: 'csrf-test-token' });
+    httpTestingController
+      .expectOne(`${environment.apiUrl}/api/auth/2fa/verify`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(authService.getCurrentSession()).toEqual(session);
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
 });

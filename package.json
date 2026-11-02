@@ -25,6 +25,7 @@
     "@tailwindcss/postcss": "^4.1.14",
     "angular-tabler-icons": "^3.26.0",
     "apexcharts": "^5.3.6",
+    "firebase": "^11.10.0",
     "iconify": "^1.4.0",
     "ng-apexcharts": "^2.0.4",
     "ngx-owl-carousel-o": "^20.0.0",

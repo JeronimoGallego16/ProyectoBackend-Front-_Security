@@ -17,15 +17,19 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const loginUrl = `${environment.apiUrl}/api/auth/login`;
+  const verifyUrl = `${environment.apiUrl}/api/auth/2fa/verify`;
   const sessionUrl = `${environment.apiUrl}/api/auth/session`;
   const requestUrl = request.url.split('?')[0];
 
   const handleError = (error: unknown) => {
     if (error instanceof HttpErrorResponse && error.status === 401) {
-      authService.clearLocalState();
+      if (requestUrl !== verifyUrl) {
+        authService.clearLocalState();
+      }
 
       if (
         requestUrl !== loginUrl &&
+        requestUrl !== verifyUrl &&
         requestUrl !== sessionUrl &&
         !router.url.startsWith('/authentication/login')
       ) {

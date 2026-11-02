@@ -31,11 +31,11 @@ describe('AuthService', () => {
     const loginUrl = `${environment.apiUrl}/api/auth/login`;
     const csrfUrl = `${environment.apiUrl}/api/auth/csrf`;
     const sessionUrl = `${environment.apiUrl}/api/auth/session`;
-    let session: unknown;
+    let result: unknown;
 
     service
       .login({ email: 'user@example.com', password: 'Passw0rd!' })
-      .subscribe((response) => (session = response));
+      .subscribe((response) => (result = response));
 
     const csrfRequest = httpTestingController.expectOne(csrfUrl);
     expect(csrfRequest.request.method).toBe('GET');
@@ -59,7 +59,10 @@ describe('AuthService', () => {
     expect(sessionRequest.request.headers.has('Authorization')).toBeFalse();
     sessionRequest.flush({ id: 1, name: 'Test User', email: 'user@example.com' });
 
-    expect(session).toEqual({ id: 1, name: 'Test User', email: 'user@example.com' });
+    expect(result).toEqual({
+      kind: 'authenticated',
+      session: { id: 1, name: 'Test User', email: 'user@example.com' },
+    });
 
     httpClient.post(`${environment.apiUrl}/api/users`, {}).subscribe();
     const apiRequest = httpTestingController.expectOne(`${environment.apiUrl}/api/users`);
@@ -67,6 +70,57 @@ describe('AuthService', () => {
     expect(apiRequest.request.headers.get('X-XSRF-TOKEN')).toBe('csrf-test-token');
     expect(apiRequest.request.headers.has('Authorization')).toBeFalse();
     apiRequest.flush({});
+  });
+
+  it('returns the 2FA challenge from the unauthorized login response', () => {
+    let result: unknown;
+
+    service
+      .login({ email: 'user@example.com', password: 'Passw0rd!' })
+      .subscribe((response) => (result = response));
+
+    httpTestingController.expectOne(`${environment.apiUrl}/api/auth/csrf`)
+      .flush({ token: 'csrf-test-token' });
+
+    const loginRequest = httpTestingController.expectOne(
+      `${environment.apiUrl}/api/auth/login`
+    );
+    loginRequest.flush(
+      { challengeId: 'challenge-123', expiresAt: '2026-11-02T00:00:00Z' },
+      { status: 401, statusText: 'Unauthorized' }
+    );
+
+    expect(result).toEqual({ kind: 'challenge', challengeId: 'challenge-123' });
+    httpTestingController.expectNone(`${environment.apiUrl}/api/auth/session`);
+  });
+
+  it('verifies a 2FA challenge and confirms the authenticated session', () => {
+    let session: unknown;
+
+    service
+      .verifyTwoFactor('challenge-123', '123456')
+      .subscribe((response) => (session = response));
+
+    httpTestingController.expectOne(`${environment.apiUrl}/api/auth/csrf`)
+      .flush({ token: 'csrf-test-token' });
+
+    const verifyRequest = httpTestingController.expectOne(
+      `${environment.apiUrl}/api/auth/2fa/verify`
+    );
+    expect(verifyRequest.request.method).toBe('POST');
+    expect(verifyRequest.request.withCredentials).toBeTrue();
+    expect(verifyRequest.request.headers.get('X-XSRF-TOKEN')).toBe('csrf-test-token');
+    expect(verifyRequest.request.body).toEqual({
+      challengeId: 'challenge-123',
+      code: '123456',
+    });
+    verifyRequest.flush(null, { status: 204, statusText: 'No Content' });
+
+    httpTestingController
+      .expectOne(`${environment.apiUrl}/api/auth/session`)
+      .flush({ id: 1, email: 'user@example.com' });
+
+    expect(session).toEqual({ id: 1, email: 'user@example.com' });
   });
 
   it('logs out with CSRF and credentials, then clears the local session on 204', () => {

@@ -1,25 +1,24 @@
 # Integración del frontend con `ms_security`
 
-Esta guía se actualizó a partir del contexto del backend compartido el
-21-10-2026. Las rutas, DTO y reglas descritas corresponden a ese resumen; no se
-inspeccionó ni ejecutó el repositorio backend desde este workspace. Antes de
-considerarlos contrato definitivo, deben verificarse contra el código actual y
-probarse con el servicio en ejecución.
+Esta guía resume el contrato observado en el código de `ms_security`.
 
 ## Contrato de autenticación actualizado: cookie HttpOnly
 
 Este apartado es la referencia vigente para autenticación y sustituye las
 referencias anteriores de esta guía a JWT devuelto como `Bearer` en JSON.
-El código del backend no está disponible en este workspace; los detalles a
-continuación reflejan el contrato y las clases que el usuario compartió.
 
 - `POST /api/auth/login` recibe `{ "email": "...", "password": "..." }`,
-  responde `204 No Content` y establece `AUTH_TOKEN` como cookie `HttpOnly`,
-  con `Path=/api`, `SameSite=Lax` y `Secure` según `COOKIE_SECURE`.
+  responde `401` con `{ "challengeId": "...", "expiresAt": "..." }` al emitir
+  el desafío 2FA. Credenciales incorrectas también producen `401`, pero sin
+  `challengeId`.
+- `POST /api/auth/2fa/verify` recibe
+  `{ "challengeId": "...", "code": "123456" }`; `code` debe tener seis dígitos.
+  Cuando es válido, responde `204 No Content` y establece `AUTH_TOKEN` como
+  cookie `HttpOnly`, con `Path=/api`, `SameSite=Lax` y `Secure` según
+  `COOKIE_SECURE`.
 - `GET /api/auth/session` requiere autenticación por cookie y responde
-  `{ "id": number, "name": string, "email": string }`. El frontend usa este
-  endpoint para confirmar que la sesión está activa; un `204` de login por sí
-  solo no se toma como prueba suficiente de sesión.
+  `{ "id": number, "email": string }`. El frontend usa este endpoint después
+  de verificar el desafío para confirmar que la sesión está activa.
 - `GET /api/auth/csrf` inicializa CSRF y responde `{ "token": "..." }`, además
   de establecer `XSRF-TOKEN` (no HttpOnly). Las mutaciones envían el valor del
   cuerpo en `X-XSRF-TOKEN`. Como esta cookie está limitada a `Path=/api`, la
@@ -34,8 +33,8 @@ continuación reflejan el contrato y las clases que el usuario compartió.
   sincronizada con el origen real del frontend.
 - La cookie de autenticación no debe ser accesible desde JavaScript. En local
   HTTP, `Secure=false` permite la prueba; en HTTPS/producción debe ser `true`.
-  El frontend conserva las pantallas existentes de 2FA y recuperación, pero
-  no las conecta porque sus endpoints/contratos no se han definido.
+  El frontend conserva el `challengeId` durante la navegación a la pantalla de
+  verificación; no guarda el código 2FA ni el token en almacenamiento web.
 
 ## Resumen del contrato compartido
 
@@ -203,15 +202,16 @@ lado backend.
 Esta sección actualiza cualquier referencia anterior que describa el login
 como una pantalla exclusivamente visual:
 
-- `/authentication/login` consume `POST /api/auth/login` mediante `AuthService`.
-- El `accessToken` se conserva únicamente en memoria y se limpia al alcanzar
-  `expiresAt`. No se escribe en `localStorage` ni en `sessionStorage`; al
-  recargar la aplicación, se debe iniciar sesión nuevamente.
+- `/authentication/login` consume `POST /api/auth/login` mediante `AuthService`
+  y navega a `/authentication/verify-2fa` al recibir un `challengeId` en el
+  cuerpo de la respuesta `401`.
+- `/authentication/verify-2fa` envía el código y `challengeId` a
+  `POST /api/auth/2fa/verify`. Después del `204`, consulta
+  `GET /api/auth/session` y navega al dashboard si la sesión quedó activa.
 - `authInterceptor` agrega el encabezado Bearer a las solicitudes dirigidas a
   la URL API configurada, excepto al endpoint de login.
-- `/authentication/verify-2fa` y `/authentication/forgot-password` existen
-  como interfaces informativas. Sus acciones siguen deshabilitadas porque el
-  backend compartido no especifica endpoints ni DTO para esos flujos.
+- `/authentication/forgot-password` sigue siendo una interfaz informativa; no
+  se ha definido ni conectado su endpoint.
 - El frontend no implementa cierre de sesión del lado servidor, guardas de
   rutas ni autorización por rol/permiso. Limpiar el token en memoria no implica
   que el backend lo revoque.

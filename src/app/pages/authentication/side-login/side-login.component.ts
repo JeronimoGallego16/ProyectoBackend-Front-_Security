@@ -50,7 +50,16 @@ export class AppSideLoginComponent {
       .login(this.form.getRawValue())
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: (result) => {
+          if (result.kind === 'challenge') {
+            void this.router.navigate(['/authentication/verify-2fa'], {
+              state: { challengeId: result.challengeId },
+            });
+            return;
+          }
+
+          void this.router.navigate(['/dashboard']);
+        },
         error: (error) => {
           this.errorMessage =
             error?.status === 401

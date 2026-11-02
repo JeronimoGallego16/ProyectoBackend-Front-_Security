@@ -4,19 +4,39 @@
       <h1 class="mb-2 text-2xl font-semibold">Two-factor verification</h1>
       <p class="mb-4 text-gray-600">Enter the verification code to continue.</p>
 
-      <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="status">
-        Two-factor verification is not connected. The backend contract currently
-        available does not define a 2FA verification endpoint, so no code will
-        be submitted or verified.
-      </div>
+      @if (!challengeId) {
+        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+          No hay un desafío de verificación activo. Inicia sesión para solicitar un nuevo código.
+        </div>
+      }
 
-      <form [formGroup]="form">
+      <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Verification code</mat-label>
-          <input matInput formControlName="code" autocomplete="one-time-code" />
+          <input
+            matInput
+            formControlName="code"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            maxlength="6"
+          />
+          @if (form.controls.code.touched && form.controls.code.hasError('required')) {
+            <mat-error>El código es obligatorio.</mat-error>
+          } @else if (form.controls.code.touched && form.controls.code.hasError('pattern')) {
+            <mat-error>Ingresa un código de seis dígitos.</mat-error>
+          }
         </mat-form-field>
-        <button mat-flat-button color="primary" class="w-full" type="button" disabled>
-          Verify code
+        @if (errorMessage) {
+          <p class="mb-3 text-sm text-red-700" role="alert">{{ errorMessage }}</p>
+        }
+        <button
+          mat-flat-button
+          color="primary"
+          class="w-full"
+          type="submit"
+          [disabled]="isLoading || !challengeId"
+        >
+          @if (isLoading) { Verificando... } @else { Verify code }
         </button>
       </form>
 
