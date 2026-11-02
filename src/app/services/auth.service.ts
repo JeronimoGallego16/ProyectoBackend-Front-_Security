@@ -101,9 +101,19 @@ export class AuthService {
   }
 
   public getSession(): Observable<AuthSession> {
-    return this.http.get<AuthSession>(`${this.authUrl}/session`, {
+    return this.http.get<{ id?: number; user_id?: number; name?: string; email?: string }>(
+      `${this.authUrl}/session`,
+      {
       withCredentials: true,
-    }).pipe(tap((session) => (this.currentSession = session)));
+      }
+    ).pipe(
+      map((session) => ({
+        id: session.id ?? session.user_id ?? 0,
+        name: session.name ?? '',
+        email: session.email ?? '',
+      })),
+      tap((session) => (this.currentSession = session))
+    );
   }
 
   public getPostAuthenticationRoute(session: AuthSession): Observable<string> {
