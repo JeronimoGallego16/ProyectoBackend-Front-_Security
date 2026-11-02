@@ -61,6 +61,11 @@ export const routes: Routes = [
           import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
+        path: 'my-profile',
+        loadComponent: () =>
+          import('./pages/my-profile/my-profile.component').then((m) => m.MyProfileComponent),
+      },
+      {
         path: 'users',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },

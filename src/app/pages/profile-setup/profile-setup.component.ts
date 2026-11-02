@@ -6,7 +6,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MaterialModule } from 'src/app/material.module';
@@ -36,12 +36,14 @@ export class ProfileSetupComponent implements OnInit, OnDestroy {
   public isLoading = true;
   public isSaving = false;
   public readonly today = new Date();
+  private returnToMyProfile = false;
 
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly authService: AuthService,
     private readonly profileService: ProfileService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {
     this.form = new FormGroup({
       phone: new FormControl('', {
@@ -55,11 +57,12 @@ export class ProfileSetupComponent implements OnInit, OnDestroy {
   }
 
   public ngOnInit(): void {
+    this.returnToMyProfile = this.route.snapshot.queryParamMap.get('returnTo') === 'my-profile';
     this.authService.getSession().subscribe({
       next: (session) => {
         this.session = session;
         this.profileService.findByUserId(session.id).subscribe({
-          next: () => void this.router.navigate(['/dashboard']),
+          next: () => void this.router.navigate([this.returnToMyProfile ? '/my-profile' : '/dashboard']),
           error: (error) => {
             if (error?.status !== 404) {
               this.submitError = 'Could not verify your profile. Please try again.';
@@ -128,7 +131,7 @@ export class ProfileSetupComponent implements OnInit, OnDestroy {
       .create(this.session.id, payload, this.selectedImage ?? undefined)
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
-        next: () => void this.router.navigate(['/dashboard']),
+        next: () => void this.router.navigate([this.returnToMyProfile ? '/my-profile' : '/dashboard']),
         error: (error) => {
           this.submitError = error?.status === 409
             ? 'Your profile already exists.'

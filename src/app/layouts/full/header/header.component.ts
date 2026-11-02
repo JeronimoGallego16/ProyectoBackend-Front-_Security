@@ -48,7 +48,7 @@ export class HeaderComponent {
    * Navigates to the profile page for the authenticated user.
    */
   public navigateToProfile(): void {
-    void this.router.navigate(['/profiles']);
+    void this.router.navigate(['/my-profile']);
   }
 
   logout(): void {
