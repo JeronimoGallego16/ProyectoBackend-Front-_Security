@@ -2,6 +2,11 @@ import { NavItem } from './nav-item/nav-item';
 
 export const navItems: NavItem[] = [
   {
+    displayName: 'Dashboard',
+    iconName: 'solar:widget-2-line-duotone',
+    route: '/dashboard',
+  },
+  {
     displayName: 'Users',
     iconName: 'solar:users-group-rounded-line-duotone',
     route: '/users',

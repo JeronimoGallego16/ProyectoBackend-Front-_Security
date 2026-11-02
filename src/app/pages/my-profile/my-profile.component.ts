@@ -92,6 +92,10 @@ export class MyProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  public goToDashboard(): void {
+    void this.router.navigate(['/dashboard']);
+  }
+
   public cancelEditing(): void {
     this.isEditing = false;
     this.form.reset({ phone: '', birthDate: null });

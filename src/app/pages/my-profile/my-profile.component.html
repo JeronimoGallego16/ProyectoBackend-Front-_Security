@@ -1,5 +1,11 @@
 <div class="p-6">
-  <h1 class="mb-6 text-2xl font-bold text-gray-800">My profile</h1>
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-800">My profile</h1>
+    <button mat-stroked-button type="button" (click)="goToDashboard()">
+      <mat-icon>arrow_back</mat-icon>
+      Dashboard
+    </button>
+  </div>
 
   @if (isLoading) {
     <div class="flex justify-center py-10"><mat-spinner diameter="40"></mat-spinner></div>
