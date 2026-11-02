@@ -25,14 +25,13 @@ import { FeedbackCase } from 'src/app/models/feedback-case';
 import { User } from 'src/app/models/user.model';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { UserService } from 'src/app/services/user.service';
+import { PASSWORD_POLICY } from 'src/app/shared/validators/password-policy';
 
 interface UserFormControls {
   name: FormControl<string>;
   email: FormControl<string>;
   password: FormControl<string>;
 }
-
-const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])\S{8,72}$/;
 
 @Component({
   selector: 'app-users',
