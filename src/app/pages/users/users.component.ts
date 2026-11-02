@@ -209,7 +209,9 @@ export class UsersComponent implements OnInit {
         error: (error) => {
           this.feedbackHandlerService.error(
             String(error?.status ?? FeedbackCase.SERVER_ERROR),
-            'Could not delete the user. Check whether the user has related records.'
+            error?.status === 409
+              ? 'Cannot delete this user because it still has related records.'
+              : 'The server could not delete this user. Please try again or contact support.'
           );
           this.confirmDeleteOpen = false;
           this.pendingDeleteUser = null;

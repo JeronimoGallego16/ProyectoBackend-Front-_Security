@@ -172,7 +172,12 @@ export class RolesComponent implements OnInit {
           this.loadRoles();
         },
         error: (error) => {
-          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the role.');
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            error?.status === 409
+              ? 'Cannot delete this role because it is assigned to one or more users.'
+              : 'Could not delete the role. Verify that it is not assigned to a user or permission.'
+          );
           this.confirmDeleteOpen = false;
           this.pendingDeleteRole = null;
         },
@@ -225,7 +230,12 @@ export class RolesComponent implements OnInit {
         this.loadRoles();
       },
       error: (error) =>
-        this.feedbackHandlerService.error(String(error?.status ?? 500), 'Could not save the role. Please verify the data.'),
+        this.feedbackHandlerService.error(
+          String(error?.status ?? FeedbackCase.SERVER_ERROR),
+          error?.status === 409
+            ? 'A role with this name already exists.'
+            : 'Could not save the role. Please verify the data.'
+        ),
     });
   }
 

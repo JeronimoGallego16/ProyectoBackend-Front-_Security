@@ -210,7 +210,12 @@ export class PermissionsComponent implements OnInit {
           this.loadPermissions();
         },
         error: (error) => {
-          this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not delete the permission.');
+          this.feedbackHandlerService.error(
+            String(error?.status ?? FeedbackCase.SERVER_ERROR),
+            error?.status === 409
+              ? 'Cannot delete this permission because it is assigned to one or more roles.'
+              : 'Could not delete the permission. Verify that it is not assigned to a role.'
+          );
           this.confirmDeleteOpen = false;
           this.pendingDeletePermission = null;
         },
@@ -256,7 +261,12 @@ export class PermissionsComponent implements OnInit {
         this.loadPermissions();
       },
       error: (error) =>
-        this.feedbackHandlerService.error(String(error?.status ?? FeedbackCase.SERVER_ERROR), 'Could not save the permission. Please verify the data.'),
+        this.feedbackHandlerService.error(
+          String(error?.status ?? FeedbackCase.SERVER_ERROR),
+          error?.status === 409
+            ? 'A permission with this URL, method, and entity already exists.'
+            : 'Could not save the permission. Please verify the data.'
+        ),
     });
   }
 
