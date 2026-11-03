@@ -13,7 +13,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (item of data; track $index) {
+      @for (item of pagedData; track $index) {
         <tr class="border-b hover:bg-gray-50 transition-colors">
           @for (col of columns; track col.field) {
             <td class="px-4 py-3 text-gray-700">
@@ -61,7 +61,7 @@
           </td>
         </tr>
       }
-      @if (data.length === 0) {
+      @if (pagedData.length === 0) {
         <tr>
           <td [attr.colspan]="columns.length + 1" class="px-4 py-8 text-center text-gray-400">
             No data
@@ -71,3 +71,11 @@
     </tbody>
   </table>
 </div>
+<mat-paginator
+  [length]="data.length"
+  [pageSize]="pageSize"
+  [pageIndex]="pageIndex"
+  [pageSizeOptions]="[10]"
+  (page)="onPageChange($event)"
+  showFirstLastButtons
+></mat-paginator>

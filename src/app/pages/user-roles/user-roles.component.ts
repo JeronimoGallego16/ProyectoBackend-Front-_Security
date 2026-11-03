@@ -13,6 +13,7 @@ import { FeedbackHandlerService } from 'src/app/services/feedback-handler.servic
 import { RoleService } from 'src/app/services/role.service';
 import { UserRoleService } from 'src/app/services/user-role.service';
 import { UserService } from 'src/app/services/user.service';
+import { PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-user-roles',
@@ -33,8 +34,27 @@ export class UserRolesComponent implements OnInit {
   public isSaving = false;
   public confirmRemovalOpen = false;
   public assignmentLoadError: string | null = null;
+  public rolesPageIndex = 0;
+  public usersPageIndex = 0;
+  public readonly pageSize = 10;
 
   private assignments: UserRole[] = [];
+
+  public get pagedRoles(): Role[] {
+    return this.roles.slice(this.rolesPageIndex * this.pageSize, (this.rolesPageIndex + 1) * this.pageSize);
+  }
+
+  public get pagedUsers(): User[] {
+    return this.users.slice(this.usersPageIndex * this.pageSize, (this.usersPageIndex + 1) * this.pageSize);
+  }
+
+  public onRolesPageChange(event: PageEvent): void {
+    this.rolesPageIndex = event.pageIndex;
+  }
+
+  public onUsersPageChange(event: PageEvent): void {
+    this.usersPageIndex = event.pageIndex;
+  }
 
   constructor(
     private readonly roleService: RoleService,
@@ -69,6 +89,8 @@ export class UserRolesComponent implements OnInit {
       .subscribe(({ roles, users }) => {
         this.roles = roles;
         this.users = users;
+        this.rolesPageIndex = 0;
+        this.usersPageIndex = 0;
       });
   }
 

@@ -16,7 +16,7 @@
             <h2 class="text-sm font-semibold text-gray-700">Roles</h2>
           </div>
           <div class="max-h-[600px] overflow-y-auto">
-            @for (role of roles; track role.id) {
+            @for (role of pagedRoles; track role.id) {
               <button
                 type="button"
                 class="w-full border-b px-4 py-3 text-left transition-colors hover:bg-gray-50"
@@ -30,6 +30,14 @@
               <div class="px-4 py-6 text-center text-sm text-gray-400">No roles available</div>
             }
           </div>
+          <mat-paginator
+            [length]="roles.length"
+            [pageSize]="pageSize"
+            [pageSizeOptions]="[10]"
+            [pageIndex]="rolesPageIndex"
+            (page)="onRolesPageChange($event)"
+            showFirstLastButtons
+          ></mat-paginator>
         </div>
       </div>
 
@@ -80,7 +88,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (user of users; track user.id) {
+                    @for (user of pagedUsers; track user.id) {
                       <tr
                         class="border-b last:border-0"
                         [class.opacity-50]="isAssigned(user.id)"
@@ -123,6 +131,14 @@
                   </tbody>
                 </table>
               </div>
+              <mat-paginator
+                [length]="users.length"
+                [pageSize]="pageSize"
+                [pageSizeOptions]="[10]"
+                [pageIndex]="usersPageIndex"
+                (page)="onUsersPageChange($event)"
+                showFirstLastButtons
+              ></mat-paginator>
             } @else {
               <p class="text-sm text-gray-500">No registered users are available.</p>
             }

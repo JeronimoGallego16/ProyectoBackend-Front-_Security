@@ -49,6 +49,7 @@ export class RolePermissionsComponent implements OnInit {
 
   public permissionsByEntityAction: Map<string, Permission | undefined> = new Map();
 
+
   public isLoading = false;
   public isSaving = false;
 

@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { MaterialModule } from 'src/app/material.module';
 
 export interface TableColumn {
@@ -30,13 +31,35 @@ export interface TableAction {
   imports: [MaterialModule],
   templateUrl: './table-list.component.html',
 })
-export class DataTableComponent {
+export class DataTableComponent implements OnChanges {
   @Input() data: any[] = [];
   @Input() columns: TableColumn[] = [];
+  @Input() pageSize = 10;
   @Input() deleteDisabled = false;
   @Input() actions: TableAction[] = [];
   @Output() view = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
   @Output() customAction = new EventEmitter<{ action: string; row: any }>();
+
+  public pageIndex = 0;
+
+  public ngOnChanges(changes: SimpleChanges): void {
+    if (changes['data'] || changes['pageSize']) {
+      this.pageIndex = Math.min(this.pageIndex, this.getLastPageIndex());
+    }
+  }
+
+  public get pagedData(): any[] {
+    const start = this.pageIndex * this.pageSize;
+    return this.data.slice(start, start + this.pageSize);
+  }
+
+  public onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+  }
+
+  private getLastPageIndex(): number {
+    return Math.max(0, Math.ceil(this.data.length / this.pageSize) - 1);
+  }
 }

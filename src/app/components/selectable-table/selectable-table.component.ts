@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { MaterialModule } from 'src/app/material.module';
 
 /**
@@ -32,6 +33,9 @@ export class SelectableTableComponent {
    * Property name used to identify a matrix row.
    */
   @Input() public matrixRowIdField = 'entity';
+  @Input() public pageSize = 10;
+
+  public pageIndex = 0;
 
   /**
    * Stores selected matrix cells as "rowKey|columnKey".
@@ -51,6 +55,15 @@ export class SelectableTableComponent {
    * Emits matrix selection changes as selected permission objects.
    */
   @Output() public matrixSelectionChange = new EventEmitter<any[]>();
+
+  public get pagedMatrixRows(): any[] {
+    const start = this.pageIndex * this.pageSize;
+    return this.matrixRows.slice(start, start + this.pageSize);
+  }
+
+  public onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+  }
 
   /**
    * Clears the current selection and notifies the parent component.

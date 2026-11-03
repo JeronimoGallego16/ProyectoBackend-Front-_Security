@@ -13,7 +13,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (row of matrixRows; track row[matrixRowIdField]) {
+      @for (row of pagedMatrixRows; track row[matrixRowIdField]) {
         <tr class="border-b hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3 text-gray-700 font-medium sticky left-0 bg-white z-10">
             {{ row[matrixRowIdField] }}
@@ -28,7 +28,7 @@
           }
         </tr>
       }
-      @if (matrixRows.length === 0 || matrixColumns.length === 0) {
+      @if (pagedMatrixRows.length === 0 || matrixColumns.length === 0) {
         <tr>
           <td [attr.colspan]="matrixColumns.length + 1" class="px-4 py-8 text-center text-gray-400">
             No hay datos disponibles
@@ -38,3 +38,11 @@
     </tbody>
   </table>
 </div>
+<mat-paginator
+  [length]="matrixRows.length"
+  [pageSize]="pageSize"
+  [pageIndex]="pageIndex"
+  [pageSizeOptions]="[10]"
+  (page)="onPageChange($event)"
+  showFirstLastButtons
+></mat-paginator>
