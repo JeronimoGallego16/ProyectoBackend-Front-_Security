@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PasswordRecoveryService } from 'src/app/services/password-recovery.service';
 import { ResetPasswordComponent } from './reset-password.component';
@@ -26,6 +25,7 @@ describe('ResetPasswordComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ResetPasswordComponent],
       providers: [
+        provideRouter([]),
         {
           provide: ActivatedRoute,
           useFactory: () => ({
@@ -38,11 +38,7 @@ describe('ResetPasswordComponent', () => {
         },
         { provide: PasswordRecoveryService, useValue: recoveryService },
       ],
-    })
-      .overrideComponent(ResetPasswordComponent, {
-        set: { template: '', imports: [ReactiveFormsModule] },
-      })
-      .compileComponents();
+    }).compileComponents();
   });
 
   it('rejects passwords that violate the shared password policy', () => {
@@ -64,7 +60,56 @@ describe('ResetPasswordComponent', () => {
     component.submit();
 
     expect(component.form.hasError('passwordsMismatch')).toBeTrue();
+    expect(component.showPasswordMismatch).toBeTrue();
+    expect(component.form.controls.confirmPassword.touched).toBeTrue();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Las contraseñas no coinciden.'
+    );
     expect(recoveryService.resetPassword).not.toHaveBeenCalled();
+  });
+
+  it('updates the mismatch feedback as the confirmation changes', () => {
+    createComponent();
+    component.form.controls.newPassword.setValue('ValidPass1!');
+    component.form.controls.confirmPassword.setValue('DifferentPass1!');
+    component.form.controls.confirmPassword.markAsTouched();
+
+    expect(component.showPasswordMismatch).toBeTrue();
+
+    component.form.controls.confirmPassword.setValue('ValidPass1!');
+
+    expect(component.showPasswordMismatch).toBeFalse();
+  });
+
+  it('toggles visibility independently for each password field', () => {
+    createComponent();
+
+    component.toggleNewPasswordVisibility();
+    expect(component.isNewPasswordVisible).toBeTrue();
+    expect(component.isConfirmPasswordVisible).toBeFalse();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        'input[formControlName="newPassword"]'
+      )?.type
+    ).toBe('text');
+
+    component.toggleNewPasswordVisibility();
+    component.toggleConfirmPasswordVisibility();
+    expect(component.isNewPasswordVisible).toBeFalse();
+    expect(component.isConfirmPasswordVisible).toBeTrue();
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        'input[formControlName="newPassword"]'
+      )?.type
+    ).toBe('password');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        'input[formControlName="confirmPassword"]'
+      )?.type
+    ).toBe('text');
   });
 
   it('submits the token from the URL and reports confirmed success', () => {
@@ -109,5 +154,6 @@ describe('ResetPasswordComponent', () => {
   function createComponent(): void {
     fixture = TestBed.createComponent(ResetPasswordComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
   }
 });

@@ -40,6 +40,9 @@ export class ResetPasswordComponent {
   public isLoading = false;
   public isComplete = false;
   public isInvalidToken = false;
+  public isNewPasswordVisible = false;
+  public isConfirmPasswordVisible = false;
+  public hasSubmitted = false;
   public errorMessage = '';
 
   constructor(
@@ -69,6 +72,7 @@ export class ResetPasswordComponent {
   }
 
   public submit(): void {
+    this.hasSubmitted = true;
     if (this.form.invalid || this.isLoading || !this.token) {
       this.form.markAllAsTouched();
       return;
@@ -90,5 +94,23 @@ export class ResetPasswordComponent {
             'No se pudo restablecer la contraseña. Inténtalo de nuevo más tarde.';
         },
       });
+  }
+
+  public get showPasswordMismatch(): boolean {
+    return (
+      this.form.hasError('passwordsMismatch')
+      && (
+        this.form.controls.confirmPassword.touched
+        || this.hasSubmitted
+      )
+    );
+  }
+
+  public toggleNewPasswordVisibility(): void {
+    this.isNewPasswordVisible = !this.isNewPasswordVisible;
+  }
+
+  public toggleConfirmPasswordVisibility(): void {
+    this.isConfirmPasswordVisible = !this.isConfirmPasswordVisible;
   }
 }
