@@ -6,14 +6,4 @@ export interface Sport {
   name: string;
   description: string;
   parentSportId: number | null;
-  teamSports: TeamSport[];
-}
-
-/**
- * Team assignment associated with a sport.
- */
-export interface TeamSport {
-  teamSportId: number;
-  teamId: number;
-  sportId: number;
 }

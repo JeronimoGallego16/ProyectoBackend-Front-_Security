@@ -47,4 +47,9 @@ export const navItems: NavItem[] = [
     iconName: 'solar:football-line-duotone',
     route: '/sports',
   },
+  {
+    displayName: 'Teams',
+    iconName: 'solar:users-group-rounded-line-duotone',
+    route: '/teams',
+  },
 ];

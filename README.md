@@ -71,8 +71,9 @@ microservicios.
 Configura las variables y credenciales requeridas por cada servicio en tu
 entorno local. No guardes contraseñas, tokens ni credenciales en el repositorio.
 El frontend usa `src/environment/environment.ts` para la configuración local;
-ajusta allí la URL de la API si tu backend no está disponible en
-`http://localhost:8181`.
+ajusta `apiUrl` si el backend de seguridad no está disponible en
+`http://localhost:8181` y `bussinesApiUrl` si el microservicio de negocio no
+está disponible en `http://localhost:3000`.
 
 El script de inicio configura Firebase para el backend con el proyecto
 `oauthbackend-28668` y espera el archivo

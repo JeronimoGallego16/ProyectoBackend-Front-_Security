@@ -45,6 +45,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'teams',
+        loadComponent: () =>
+          import('./pages/teams/teams.component').then(
+            (m) => m.TeamsComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },
