@@ -1,0 +1,53 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Matches</h1>
+    <button mat-flat-button color="primary" (click)="onCreateClick()">
+      <mat-icon>add</mat-icon>
+      New Match
+    </button>
+  </div>
+
+  @if (showForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="matchForm"
+        [fields]="fields"
+        [isEditing]="isEditing"
+        [isLoading]="isLoading"
+        (submitted)="onSubmit()"
+        (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-data-table
+      [data]="matches"
+      [columns]="columns"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+    ></app-data-table>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    title="Delete match"
+    [message]="pendingDeleteMatch ? 'Are you sure you want to delete match #' + pendingDeleteMatch.matchId + '?' : 'Are you sure?'"
+    [isLoading]="isLoading"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Match details"
+    [data]="selectedMatch"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
+</div>

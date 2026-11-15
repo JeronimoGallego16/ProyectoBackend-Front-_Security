@@ -52,6 +52,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'matches',
+        loadComponent: () =>
+          import('./pages/matches/matches.component').then(
+            (m) => m.MatchesComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },

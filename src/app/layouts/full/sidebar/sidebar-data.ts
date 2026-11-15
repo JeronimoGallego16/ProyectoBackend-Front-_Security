@@ -52,4 +52,9 @@ export const navItems: NavItem[] = [
     iconName: 'solar:users-group-rounded-line-duotone',
     route: '/teams',
   },
+  {
+    displayName: 'Matches',
+    iconName: 'solar:calendar-mark-line-duotone',
+    route: '/matches',
+  },
 ];
