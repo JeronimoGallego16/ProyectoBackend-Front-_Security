@@ -38,6 +38,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sports',
+        loadComponent: () =>
+          import('./pages/sports/sports.component').then(
+            (m) => m.SportsComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },

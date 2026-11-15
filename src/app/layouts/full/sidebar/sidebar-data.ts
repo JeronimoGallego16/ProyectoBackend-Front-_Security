@@ -42,4 +42,9 @@ export const navItems: NavItem[] = [
     route: '/role-permissions',
     requiredRole: 'ADMIN',
   },
+   {
+    displayName: 'Sports',
+    iconName: 'solar:football-line-duotone',
+    route: '/sports',
+  },
 ];
