@@ -8,6 +8,10 @@ import {
   AssignmentTableRow,
 } from 'src/app/components/assignment-table/assignment-table.component';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
+import {
+  EntitySelectorComponent,
+  EntitySelectorOption,
+} from 'src/app/components/entity-selector/entity-selector.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Role } from 'src/app/models/role.model';
@@ -26,6 +30,7 @@ import { UserService } from 'src/app/services/user.service';
     CommonModule,
     MaterialModule,
     AssignmentTableComponent,
+    EntitySelectorComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './user-roles.component.html',
@@ -49,6 +54,19 @@ export class UserRolesComponent implements OnInit {
   public assignmentLoadError: string | null = null;
 
   private assignments: UserRole[] = [];
+
+  /**
+   * Builds selector options from the available roles.
+   *
+   * @returns Role options with their descriptions.
+   */
+  public get roleOptions(): EntitySelectorOption[] {
+    return this.roles.map((role) => ({
+      id: role.id,
+      label: role.name,
+      description: role.description,
+    }));
+  }
 
   constructor(
     private readonly roleService: RoleService,
@@ -114,6 +132,18 @@ export class UserRolesComponent implements OnInit {
         this.assignments = assignments;
         this.refreshUserLists();
       });
+  }
+
+  /**
+   * Selects a role emitted by the shared entity selector.
+   *
+   * @param roleId - Identifier of the selected role.
+   */
+  public onRoleOptionSelect(roleId: number | string): void {
+    const role = this.roles.find((candidate) => candidate.id === Number(roleId));
+    if (role) {
+      this.onRoleSelect(role);
+    }
   }
 
   public toggleUser(userId: number): void {

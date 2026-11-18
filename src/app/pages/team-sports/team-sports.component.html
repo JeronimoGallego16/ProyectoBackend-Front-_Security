@@ -22,30 +22,13 @@
   } @else {
     <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12 md:col-span-3">
-        <div class="overflow-hidden rounded-lg border">
-          <div class="border-b bg-gray-50 px-4 py-3">
-            <h2 class="text-sm font-semibold text-gray-700">Teams</h2>
-          </div>
-          <div class="max-h-[600px] overflow-y-auto">
-            @for (team of teams; track team.teamId) {
-              <button
-                type="button"
-                class="w-full border-b px-4 py-3 text-left transition-colors hover:bg-gray-50"
-                [class.bg-blue-50]="selectedTeam?.teamId === team.teamId"
-                (click)="onTeamSelect(team)"
-              >
-                <div class="font-medium text-gray-800">{{ team.name }}</div>
-                <div class="truncate text-xs text-gray-500">
-                  #{{ team.teamId }} · {{ team.category }}
-                </div>
-              </button>
-            } @empty {
-              <div class="px-4 py-6 text-center text-sm text-gray-400">
-                No teams available
-              </div>
-            }
-          </div>
-        </div>
+        <app-entity-selector
+          title="Teams"
+          [options]="teamOptions"
+          [selectedId]="selectedTeam?.teamId ?? null"
+          emptyMessage="No teams available"
+          (selectionChange)="onTeamOptionSelect($event)"
+        ></app-entity-selector>
       </div>
 
       <div class="col-span-12 md:col-span-9">

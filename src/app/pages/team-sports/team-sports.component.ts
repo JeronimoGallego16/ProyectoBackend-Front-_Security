@@ -8,6 +8,10 @@ import {
   AssignmentTableRow,
 } from 'src/app/components/assignment-table/assignment-table.component';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
+import {
+  EntitySelectorComponent,
+  EntitySelectorOption,
+} from 'src/app/components/entity-selector/entity-selector.component';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { CreateTeamSportDTO } from 'src/app/models/dtos/team-sport-request.dto';
 import { Sport } from 'src/app/models/sport.model';
@@ -29,6 +33,7 @@ import { TeamService } from 'src/app/services/team.service';
     CommonModule,
     MaterialModule,
     AssignmentTableComponent,
+    EntitySelectorComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './team-sports.component.html',
@@ -51,6 +56,19 @@ export class TeamSportsComponent implements OnInit {
   public confirmRemovalOpen = false;
   public pageLoadError: string | null = null;
   public assignmentLoadError: string | null = null;
+
+  /**
+   * Builds selector options from the available teams.
+   *
+   * @returns Team options with their identifiers and categories.
+   */
+  public get teamOptions(): EntitySelectorOption[] {
+    return this.teams.map((team) => ({
+      id: team.teamId,
+      label: team.name,
+      description: `#${team.teamId} · ${team.category}`,
+    }));
+  }
 
   /**
    * Creates the team-sports page.
@@ -115,6 +133,18 @@ export class TeamSportsComponent implements OnInit {
     this.selectedTeam = team;
     this.selectedSportIds.clear();
     this.assignmentLoadError = null;
+  }
+
+  /**
+   * Selects a team emitted by the shared entity selector.
+   *
+   * @param teamId - Identifier of the selected team.
+   */
+  public onTeamOptionSelect(teamId: number | string): void {
+    const team = this.teams.find((candidate) => candidate.teamId === Number(teamId));
+    if (team) {
+      this.onTeamSelect(team);
+    }
   }
 
   /**
