@@ -57,4 +57,9 @@ export const navItems: NavItem[] = [
     iconName: 'solar:calendar-mark-line-duotone',
     route: '/matches',
   },
+  {
+    displayName: 'Assign Sports',
+    iconName: 'solar:football-line-duotone',
+    route: '/team-sports',
+  },
 ];

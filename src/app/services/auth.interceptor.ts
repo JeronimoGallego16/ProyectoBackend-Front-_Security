@@ -5,6 +5,14 @@ import { environment } from 'src/environment/environment';
 import { CsrfService } from './csrf.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  const isBusinessApiRequest = request.url.startsWith(
+    `${environment.bussinesApiUrl}/`
+  );
+
+  if (isBusinessApiRequest) {
+    return next(request.clone({ withCredentials: true }));
+  }
+
   const isBackendApiRequest = request.url.startsWith(`${environment.apiUrl}/api/`);
 
   if (!isBackendApiRequest) {

@@ -59,6 +59,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'team-sports',
+        loadComponent: () =>
+          import('./pages/team-sports/team-sports.component').then(
+            (m) => m.TeamSportsComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },
