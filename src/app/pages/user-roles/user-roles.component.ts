@@ -2,6 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { EMPTY, forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import {
+  AssignmentTableColumn,
+  AssignmentTableComponent,
+  AssignmentTableRow,
+} from 'src/app/components/assignment-table/assignment-table.component';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackCase } from 'src/app/models/feedback-case';
@@ -17,11 +22,20 @@ import { UserService } from 'src/app/services/user.service';
 @Component({
   selector: 'app-user-roles',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ConfirmDialogComponent],
+  imports: [
+    CommonModule,
+    MaterialModule,
+    AssignmentTableComponent,
+    ConfirmDialogComponent,
+  ],
   templateUrl: './user-roles.component.html',
   styleUrls: ['./user-roles.component.scss'],
 })
 export class UserRolesComponent implements OnInit {
+  public readonly assignmentTableColumns: ReadonlyArray<AssignmentTableColumn> = [
+    { header: 'Name', emphasized: true },
+    { header: 'Email' },
+  ];
   public roles: Role[] = [];
   public users: User[] = [];
   public assignedUsers: User[] = [];
@@ -200,6 +214,49 @@ export class UserRolesComponent implements OnInit {
     return this.assignments.some(
       (assignment) => this.getAssignmentUserId(assignment) === userId
     );
+  }
+
+  /**
+   * Builds display rows for the shared assignment table.
+   *
+   * @returns User rows with their current assignment and selection state.
+   */
+  public get assignmentTableRows(): AssignmentTableRow[] {
+    return this.users.map((user) => {
+      const assigned = this.isAssigned(user.id);
+      return {
+        id: user.id,
+        values: [user.name, user.email],
+        status: assigned ? 'Assigned' : 'Available',
+        selectable: !assigned,
+        selected: this.isSelected(user.id),
+        actionLabel: assigned ? 'Remove role' : undefined,
+        actionIcon: assigned ? 'person_remove' : undefined,
+        actionHint: assigned ? undefined : 'Select to assign',
+        muted: assigned,
+      };
+    });
+  }
+
+  /**
+   * Toggles selection for a user emitted by the shared assignment table.
+   *
+   * @param userId - Identifier of the user whose selection changed.
+   */
+  public onAssignmentTableSelection(userId: number | string): void {
+    this.toggleUser(Number(userId));
+  }
+
+  /**
+   * Requests removal for a user emitted by the shared assignment table.
+   *
+   * @param userId - Identifier of the assigned user.
+   */
+  public onAssignmentTableAction(userId: number | string): void {
+    const user = this.users.find((candidate) => candidate.id === Number(userId));
+    if (user) {
+      this.requestRemoval(user);
+    }
   }
 
   private refreshUserLists(): void {

@@ -69,60 +69,13 @@
               </button>
             </div>
             @if (users.length > 0) {
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                  <thead>
-                    <tr class="border-b text-gray-600">
-                      <th class="px-3 py-2">Name</th>
-                      <th class="px-3 py-2">Email</th>
-                      <th class="px-3 py-2">Status</th>
-                      <th class="px-3 py-2 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (user of users; track user.id) {
-                      <tr
-                        class="border-b last:border-0"
-                        [class.opacity-50]="isAssigned(user.id)"
-                      >
-                        <td class="px-3 py-2 font-medium">{{ user.name }}</td>
-                        <td class="px-3 py-2">{{ user.email }}</td>
-                        <td class="px-3 py-2">
-                          @if (isAssigned(user.id)) {
-                            <span class="text-xs text-gray-500">Assigned</span>
-                          } @else {
-                            <label class="inline-flex cursor-pointer items-center gap-2">
-                              <input
-                                type="checkbox"
-                                [checked]="isSelected(user.id)"
-                                [disabled]="isSaving"
-                                (change)="toggleUser(user.id)"
-                              />
-                              <span class="text-xs text-gray-600">Available</span>
-                            </label>
-                          }
-                        </td>
-                        <td class="px-3 py-2 text-right">
-                          @if (isAssigned(user.id)) {
-                            <button
-                              mat-stroked-button
-                              color="warn"
-                              type="button"
-                              [disabled]="isSaving"
-                              (click)="requestRemoval(user)"
-                            >
-                              <mat-icon>person_remove</mat-icon>
-                              Remove role
-                            </button>
-                          } @else {
-                            <span class="text-xs text-gray-400">Select to assign</span>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+              <app-assignment-table
+                [columns]="assignmentTableColumns"
+                [rows]="assignmentTableRows"
+                [disabled]="isSaving"
+                (selectionChange)="onAssignmentTableSelection($event)"
+                (action)="onAssignmentTableAction($event)"
+              ></app-assignment-table>
             } @else {
               <p class="text-sm text-gray-500">No registered users are available.</p>
             }

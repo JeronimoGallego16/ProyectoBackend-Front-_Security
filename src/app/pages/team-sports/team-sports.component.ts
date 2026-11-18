@@ -2,8 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { forkJoin, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import {
+  AssignmentTableColumn,
+  AssignmentTableComponent,
+  AssignmentTableRow,
+} from 'src/app/components/assignment-table/assignment-table.component';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
-import { SelectableTableComponent } from 'src/app/components/selectable-table/selectable-table.component';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { CreateTeamSportDTO } from 'src/app/models/dtos/team-sport-request.dto';
 import { Sport } from 'src/app/models/sport.model';
@@ -24,13 +28,17 @@ import { TeamService } from 'src/app/services/team.service';
   imports: [
     CommonModule,
     MaterialModule,
-    SelectableTableComponent,
+    AssignmentTableComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './team-sports.component.html',
   styleUrls: ['./team-sports.component.scss'],
 })
 export class TeamSportsComponent implements OnInit {
+  public readonly assignmentTableColumns: ReadonlyArray<AssignmentTableColumn> = [
+    { header: 'Sport ID' },
+    { header: 'Sport', emphasized: true },
+  ];
   public teams: Team[] = [];
   public sports: Sport[] = [];
   public assignments: TeamSport[] = [];
@@ -43,7 +51,6 @@ export class TeamSportsComponent implements OnInit {
   public confirmRemovalOpen = false;
   public pageLoadError: string | null = null;
   public assignmentLoadError: string | null = null;
-  public initialSelectedMatrixCells: string[] = [];
 
   /**
    * Creates the team-sports page.
@@ -86,7 +93,7 @@ export class TeamSportsComponent implements OnInit {
           this.sports = sports;
           this.assignments = assignments;
           this.assignmentLoadError = null;
-          this.initialSelectedMatrixCells = [];
+          this.selectedSportIds.clear();
         },
         error: (error: { status?: number }) => {
           this.pageLoadError =
@@ -107,17 +114,7 @@ export class TeamSportsComponent implements OnInit {
   public onTeamSelect(team: Team): void {
     this.selectedTeam = team;
     this.selectedSportIds.clear();
-    this.initialSelectedMatrixCells = [];
     this.assignmentLoadError = null;
-  }
-
-  /**
-   * Provides the single team row required by the selectable sport matrix.
-   *
-   * @returns Matrix row for the selected team, or an empty array when none is selected.
-   */
-  public get matrixRows(): Array<{ teamId: number }> {
-    return this.selectedTeam ? [{ teamId: this.selectedTeam.teamId }] : [];
   }
 
   /**
@@ -156,18 +153,62 @@ export class TeamSportsComponent implements OnInit {
   }
 
   /**
-   * Maps selected matrix cells to sport identifiers.
+   * Builds display rows for the selected team's assignment table.
    *
-   * @param selected - Cells emitted by the selectable table.
+   * @returns Assignment rows with sport names and removal actions.
    */
-  public onMatrixSelectionChange(
-    selected: Array<{ column?: { sportId?: number } }>
-  ): void {
-    this.selectedSportIds = new Set(
-      selected
-        .map((selection) => selection.column?.sportId)
-        .filter((sportId): sportId is number => sportId !== undefined)
+  public get assignmentTableRows(): AssignmentTableRow[] {
+    const assignedSportIds = new Set(
+      this.getSelectedTeamAssignments().map((assignment) => assignment.sportId)
     );
+
+    return this.sports.map((sport) => {
+      const assigned = assignedSportIds.has(sport.sportId);
+      return {
+        id: sport.sportId,
+        values: [sport.sportId, sport.name],
+        status: assigned ? 'Assigned' : 'Available',
+        selectable: !assigned,
+        selected: this.selectedSportIds.has(sport.sportId),
+        actionLabel: assigned ? 'Remove sport' : undefined,
+        actionIcon: assigned ? 'link_off' : undefined,
+        actionHint: assigned ? undefined : 'Select to assign',
+        muted: assigned,
+      };
+    });
+  }
+
+  /**
+   * Toggles selection for a sport emitted by the shared assignment table.
+   *
+   * @param sportId - Identifier of the sport whose selection changed.
+   */
+  public onAssignmentTableSelection(sportId: number | string): void {
+    const selectedSportId = Number(sportId);
+    if (!this.availableSports.some((sport) => sport.sportId === selectedSportId)) {
+      this.selectedSportIds.delete(selectedSportId);
+      return;
+    }
+
+    if (this.selectedSportIds.has(selectedSportId)) {
+      this.selectedSportIds.delete(selectedSportId);
+    } else {
+      this.selectedSportIds.add(selectedSportId);
+    }
+  }
+
+  /**
+   * Opens the removal confirmation for an assigned sport emitted by the table.
+   *
+   * @param sportId - Identifier of the sport assignment to remove.
+   */
+  public onAssignmentTableAction(sportId: number | string): void {
+    const assignment = this.getSelectedTeamAssignments().find(
+      (candidate) => candidate.sportId === Number(sportId)
+    );
+    if (assignment) {
+      this.requestRemoval(assignment);
+    }
   }
 
   /**
@@ -294,7 +335,6 @@ export class TeamSportsComponent implements OnInit {
         next: (assignments) => {
           this.assignments = assignments;
           this.selectedSportIds.clear();
-          this.initialSelectedMatrixCells = [];
         },
         error: (error: { status?: number }) => {
           this.assignmentLoadError =
