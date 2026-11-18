@@ -42,4 +42,24 @@ export const navItems: NavItem[] = [
     route: '/role-permissions',
     requiredRole: 'ADMIN',
   },
+   {
+    displayName: 'Sports',
+    iconName: 'solar:football-line-duotone',
+    route: '/sports',
+  },
+  {
+    displayName: 'Teams',
+    iconName: 'solar:users-group-rounded-line-duotone',
+    route: '/teams',
+  },
+  {
+    displayName: 'Matches',
+    iconName: 'solar:calendar-mark-line-duotone',
+    route: '/matches',
+  },
+  {
+    displayName: 'Assign Sports',
+    iconName: 'solar:football-line-duotone',
+    route: '/team-sports',
+  },
 ];

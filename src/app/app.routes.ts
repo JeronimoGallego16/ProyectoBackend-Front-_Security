@@ -38,6 +38,34 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'sports',
+        loadComponent: () =>
+          import('./pages/sports/sports.component').then(
+            (m) => m.SportsComponent
+          ),
+      },
+      {
+        path: 'teams',
+        loadComponent: () =>
+          import('./pages/teams/teams.component').then(
+            (m) => m.TeamsComponent
+          ),
+      },
+      {
+        path: 'matches',
+        loadComponent: () =>
+          import('./pages/matches/matches.component').then(
+            (m) => m.MatchesComponent
+          ),
+      },
+      {
+        path: 'team-sports',
+        loadComponent: () =>
+          import('./pages/team-sports/team-sports.component').then(
+            (m) => m.TeamSportsComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },
