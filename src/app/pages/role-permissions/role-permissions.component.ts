@@ -2,6 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { finalize, forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import {
+  EntitySelectorComponent,
+  EntitySelectorOption,
+} from 'src/app/components/entity-selector/entity-selector.component';
 import { SelectableTableComponent } from 'src/app/components/selectable-table/selectable-table.component';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackCase } from 'src/app/models/feedback-case';
@@ -23,7 +27,12 @@ import { RoleService } from 'src/app/services/role.service';
 @Component({
   selector: 'app-role-permissions',
   standalone: true,
-  imports: [CommonModule, MaterialModule, SelectableTableComponent],
+  imports: [
+    CommonModule,
+    MaterialModule,
+    EntitySelectorComponent,
+    SelectableTableComponent,
+  ],
   templateUrl: './role-permissions.component.html',
   styleUrls: ['./role-permissions.component.scss'],
 })
@@ -51,6 +60,19 @@ export class RolePermissionsComponent implements OnInit {
 
   public isLoading = false;
   public isSaving = false;
+
+  /**
+   * Builds selector options from the available roles.
+   *
+   * @returns Role options with their descriptions.
+   */
+  public get roleOptions(): EntitySelectorOption[] {
+    return this.roles.map((role) => ({
+      id: role.id,
+      label: role.name,
+      description: role.description,
+    }));
+  }
 
   /**
    * Creates an instance of the role permissions page.
@@ -158,6 +180,18 @@ export class RolePermissionsComponent implements OnInit {
     this.roleName = role.name;
     this.roleDescription = role.description;
     this.loadRolePermissions(role.id);
+  }
+
+  /**
+   * Selects a role emitted by the shared entity selector.
+   *
+   * @param roleId - Identifier of the selected role.
+   */
+  public onRoleOptionSelect(roleId: number | string): void {
+    const role = this.roles.find((candidate) => candidate.id === Number(roleId));
+    if (role) {
+      this.onRoleSelect(role);
+    }
   }
 
   /**
