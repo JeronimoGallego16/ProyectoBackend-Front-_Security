@@ -10,28 +10,6 @@
 
   <span class="flex-auto"></span>
 
-  @if (options.theme === 'light') {
-    <button
-      mat-icon-button
-      type="button"
-      aria-label="Switch to dark theme"
-      class="flex justify-center"
-      (click)="setLightDark('dark')"
-    >
-      <i-tabler class="flex" [name]="'moon'"></i-tabler>
-    </button>
-  } @else {
-    <button
-      mat-icon-button
-      type="button"
-      aria-label="Switch to light theme"
-      class="flex justify-center"
-      (click)="setLightDark('light')"
-    >
-      <i-tabler class="flex" [name]="'sun'"></i-tabler>
-    </button>
-  }
-
   <button mat-icon-button extended [matMenuTriggerFor]="profilemenu" aria-label="Profile menu"
     class="flex! items-center justify-center profile-btn-dd">
     @if (profileImageUrl) {
