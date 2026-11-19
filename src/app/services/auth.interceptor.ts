@@ -6,7 +6,7 @@ import { CsrfService } from './csrf.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isBusinessApiRequest = request.url.startsWith(
-    `${environment.bussinesApiUrl}/`
+    `${environment.businessApiUrl}/`
   );
 
   if (isBusinessApiRequest) {

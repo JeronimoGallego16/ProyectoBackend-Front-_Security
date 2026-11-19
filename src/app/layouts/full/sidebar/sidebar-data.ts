@@ -58,6 +58,11 @@ export const navItems: NavItem[] = [
     route: '/matches',
   },
   {
+    displayName: 'Tournaments',
+    iconName: 'solar:cup-star-line-duotone',
+    route: '/tournaments',
+  },
+  {
     displayName: 'Assign Sports',
     iconName: 'solar:football-line-duotone',
     route: '/team-sports',

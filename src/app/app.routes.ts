@@ -59,6 +59,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tournaments',
+        loadComponent: () =>
+          import('./pages/tournaments/tournaments.component').then(
+            (m) => m.TournamentsComponent
+          ),
+      },
+      {
+        path: 'tournaments/:id',
+        loadComponent: () =>
+          import('./pages/tournaments/tournament-detail.component').then(
+            (m) => m.TournamentDetailComponent
+          ),
+      },
+      {
         path: 'team-sports',
         loadComponent: () =>
           import('./pages/team-sports/team-sports.component').then(
