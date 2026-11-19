@@ -30,13 +30,15 @@
         <div class="flex justify-center py-6">
           <mat-spinner diameter="40"></mat-spinner>
         </div>
+      } @else if (rolePermissionsLoadError) {
+        <div class="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          {{ rolePermissionsLoadError }}
+        </div>
       } @else if (roleId) {
         <app-selectable-table
-          [matrixColumns]="matrixColumns"
-          [matrixRows]="matrixRows"
-          matrixColumnIdField="action"
-          [initialSelectedMatrixCells]="initialSelectedMatrixCells"
-          (matrixSelectionChange)="onMatrixSelectionChange($event)"
+          [permissions]="permissions"
+          [selectedPermissionIds]="selectedPermissionIds"
+          (selectedPermissionIdsChange)="onPermissionSelectionChange($event)"
         ></app-selectable-table>
 
         <div class="flex justify-end mt-4">

@@ -11,7 +11,6 @@ import { MaterialModule } from 'src/app/material.module';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Permission } from 'src/app/models/permission.model';
 import { Role } from 'src/app/models/role.model';
-import { RolePermissionDetail } from 'src/app/models/role-detail-with-permissions.model';
 import { RolePermissionRequestDTO } from 'src/app/models/dtos/role-permission-request.dto';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -44,19 +43,8 @@ export class RolePermissionsComponent implements OnInit {
 
   public permissions: Permission[] = [];
   public assignedPermissionIds: number[] = [];
-  public selectedPermissions: Permission[] = [];
-
-  public matrixColumns: Array<{ id: string; label: string; action: string }> = [
-    { id: 'LIST', label: 'LIST (GET)', action: 'LIST' },
-    { id: 'SEE', label: 'SEE (GET)', action: 'SEE' },
-    { id: 'CREATE', label: 'CREATE (POST)', action: 'CREATE' },
-    { id: 'MODIFY', label: 'MODIFY (PUT)', action: 'MODIFY' },
-    { id: 'DELETE', label: 'DELETE (DELETE)', action: 'DELETE' },
-  ];
-  public matrixRows: Array<{ entity: string }> = [];
-  public initialSelectedMatrixCells: string[] = [];
-
-  public permissionsByEntityAction: Map<string, Permission | undefined> = new Map();
+  public selectedPermissionIds: number[] = [];
+  public rolePermissionsLoadError: string | null = null;
 
   public isLoading = false;
   public isSaving = false;
@@ -128,48 +116,8 @@ export class RolePermissionsComponent implements OnInit {
         next: ([roles, permissions]) => {
           this.roles = roles;
           this.permissions = permissions;
-          this.buildMatrix(permissions);
         },
       });
-  }
-
-  /**
-   * Builds matrix structure from permissions grouping by entity.
-   */
-  private buildMatrix(permissions: Permission[]): void {
-    const entitySet = new Set<string>();
-    this.permissionsByEntityAction.clear();
-    permissions.forEach((p) => {
-      if (p.entity) {
-        entitySet.add(p.entity);
-      }
-      const key = this.getPermissionKey(p);
-      if (key) {
-        this.permissionsByEntityAction.set(key, p);
-      }
-    });
-    this.matrixRows = Array.from(entitySet)
-      .sort((a, b) => a.localeCompare(b))
-      .map((entity) => ({ entity }));
-  }
-
-  /**
-   * Maps permission to action key.
-   */
-  private getPermissionKey(permission: Permission): string | null {
-    if (!permission.entity) return null;
-    const method = permission.method.toUpperCase();
-    if (method === 'POST') return `${permission.entity}|CREATE`;
-    if (method === 'PUT') return `${permission.entity}|MODIFY`;
-    if (method === 'DELETE') return `${permission.entity}|DELETE`;
-    if (method === 'GET') {
-      const url = permission.url.toLowerCase();
-      if (url.includes('/{') || url.includes(':id') || url.match(/\/[^/]+\/[^/?]+$/) && !url.endsWith('s') && !url.includes('list')) {
-        return `${permission.entity}|SEE`;
-      }
-      return `${permission.entity}|LIST`;
-    }
-    return null;
   }
 
   /**
@@ -179,6 +127,9 @@ export class RolePermissionsComponent implements OnInit {
     this.roleId = role.id;
     this.roleName = role.name;
     this.roleDescription = role.description;
+    this.assignedPermissionIds = [];
+    this.selectedPermissionIds = [];
+    this.rolePermissionsLoadError = null;
     this.loadRolePermissions(role.id);
   }
 
@@ -203,9 +154,11 @@ export class RolePermissionsComponent implements OnInit {
       .findByIdWithPermissions(roleId)
       .pipe(
         catchError((error) => {
+          this.rolePermissionsLoadError =
+            'Could not load role details. Please try again.';
           this.feedbackHandlerService.error(
             String(error?.status ?? FeedbackCase.SERVER_ERROR),
-            'Could not load role details. Please try again.'
+            this.rolePermissionsLoadError
           );
           return of(null);
         }),
@@ -213,42 +166,35 @@ export class RolePermissionsComponent implements OnInit {
       )
       .subscribe({
         next: (roleDetails) => {
-          this.assignedPermissionIds = [];
-          this.initialSelectedMatrixCells = [];
-          if (roleDetails) {
-            roleDetails.permissions.forEach((detail: RolePermissionDetail) => {
-              const permission = detail.permission;
-              this.assignedPermissionIds.push(permission.id);
-              const key = this.getPermissionKey(permission);
-              if (key) {
-                this.initialSelectedMatrixCells.push(key);
-              }
-            });
-            this.initialSelectedMatrixCells = [...this.initialSelectedMatrixCells];
+          if (!roleDetails) {
+            return;
           }
+
+          this.rolePermissionsLoadError = null;
+          this.assignedPermissionIds = roleDetails.permissions.map(
+            (detail) => detail.permission.id
+          );
+          this.selectedPermissionIds = [...this.assignedPermissionIds];
         },
       });
   }
 
   /**
-   * Handles matrix selection changes.
+   * Updates selected permissions while retaining assignments absent from the catalog.
+   *
+   * @param selectedPermissionIds - Permission identifiers selected in the matrix.
    */
-  public onMatrixSelectionChange(selected: any[]): void {
-    const permissionMap = new Map<number, Permission>();
-    selected.forEach((item) => {
-      const row = item.row;
-      const column = item.column;
-      if (row && column) {
-        const key = `${row.entity}|${column.action || column.id}`;
-        const permission = this.permissionsByEntityAction.get(key);
-        if (permission) {
-          permissionMap.set(permission.id, permission);
-        }
-      } else if (item.permission) {
-        permissionMap.set(item.permission.id, item.permission);
-      }
-    });
-    this.selectedPermissions = Array.from(permissionMap.values());
+  public onPermissionSelectionChange(selectedPermissionIds: number[]): void {
+    const catalogPermissionIds = new Set(
+      this.permissions.map((permission) => permission.id)
+    );
+    const unavailableAssignedIds = this.assignedPermissionIds.filter(
+      (permissionId) => !catalogPermissionIds.has(permissionId)
+    );
+
+    this.selectedPermissionIds = Array.from(
+      new Set([...selectedPermissionIds, ...unavailableAssignedIds])
+    );
   }
 
   /**
@@ -260,12 +206,13 @@ export class RolePermissionsComponent implements OnInit {
       this.feedbackHandlerService.warning(FeedbackCase.BAD_REQUEST, 'Select a role first.');
       return;
     }
+    if (this.rolePermissionsLoadError) {
+      return;
+    }
 
     this.isSaving = true;
 
-    const selectedIds = new Set<number>(
-      this.selectedPermissions.map((permission) => permission.id)
-    );
+    const selectedIds = new Set<number>(this.selectedPermissionIds);
     const assignedIdsSet = new Set<number>(this.assignedPermissionIds);
 
     const toCreate: RolePermissionRequestDTO[] = [];
