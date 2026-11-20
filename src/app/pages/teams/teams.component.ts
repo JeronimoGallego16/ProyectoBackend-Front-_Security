@@ -50,7 +50,6 @@ export class TeamsComponent implements OnInit {
     { field: 'teamId', header: 'ID' },
     { field: 'name', header: 'Name' },
     { field: 'category', header: 'Category' },
-    { field: 'groupId', header: 'Group ID' },
   ];
 
   /**
@@ -71,13 +70,6 @@ export class TeamsComponent implements OnInit {
       placeholder: 'Team category',
       hint: 'Required; maximum 80 characters.',
     },
-    {
-      name: 'groupId',
-      label: 'Group ID',
-      type: 'text',
-      placeholder: 'Optional numeric group ID',
-      hint: 'Kept in the frontend form, but not sent to the current teams API.',
-    },
   ];
 
   /**
@@ -87,7 +79,6 @@ export class TeamsComponent implements OnInit {
     { key: 'teamId', label: 'ID' },
     { key: 'name', label: 'Name' },
     { key: 'category', label: 'Category' },
-    { key: 'groupId', label: 'Group ID' },
   ];
 
   public teams: Team[] = [];
@@ -131,13 +122,6 @@ export class TeamsComponent implements OnInit {
           Validators.maxLength(80),
         ],
       ],
-      groupId: [
-        '',
-        [
-          Validators.pattern(/^[1-9]\d*$/),
-          Validators.max(Number.MAX_SAFE_INTEGER),
-        ],
-      ],
     });
   }
 
@@ -173,7 +157,7 @@ export class TeamsComponent implements OnInit {
     this.isEditing = false;
     this.editingTeamId = null;
     this.originalTeam = null;
-    this.teamForm.reset({ name: '', category: '', groupId: '' });
+    this.teamForm.reset({ name: '', category: '' });
     this.showForm = true;
   }
 
@@ -189,7 +173,6 @@ export class TeamsComponent implements OnInit {
     this.teamForm.reset({
       name: team.name,
       category: team.category,
-      groupId: team.groupId == null ? '' : String(team.groupId),
     });
     this.showForm = true;
   }
@@ -331,7 +314,7 @@ export class TeamsComponent implements OnInit {
     this.isEditing = false;
     this.editingTeamId = null;
     this.originalTeam = null;
-    this.teamForm.reset({ name: '', category: '', groupId: '' });
+    this.teamForm.reset({ name: '', category: '' });
   }
 
   /**

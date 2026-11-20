@@ -9,6 +9,15 @@
 
   @if (showForm) {
     <div class="mb-6">
+      @if (submissionError) {
+        <div
+          class="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-red-800"
+          role="alert"
+          aria-live="assertive"
+        >
+          {{ submissionError }}
+        </div>
+      }
       <app-dynamic-form
         [form]="matchForm"
         [fields]="fields"
@@ -16,6 +25,19 @@
         [isLoading]="isLoading"
         (submitted)="onSubmit()"
         (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (showResultForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="resultForm"
+        [fields]="resultFields"
+        [isEditing]="true"
+        [isLoading]="isLoading"
+        (submitted)="onSubmitResult()"
+        (cancelled)="cancelResultForm()"
       ></app-dynamic-form>
     </div>
   }
@@ -28,9 +50,11 @@
     <app-data-table
       [data]="matches"
       [columns]="columns"
+      [actions]="actions"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (delete)="onDelete($event)"
+      (customAction)="onCustomAction($event)"
     ></app-data-table>
   }
 

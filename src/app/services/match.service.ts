@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import {
   CreateMatchDTO,
+  MatchResultDTO,
   UpdateMatchDTO,
 } from '../models/dtos/match-request.dto';
 import { Match } from '../models/match.model';
@@ -72,5 +73,9 @@ export class MatchService {
    */
   public delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  public updateResult(id: number, result: MatchResultDTO): Observable<Match> {
+    return this.http.patch<Match>(`${this.baseUrl}/${id}/result`, result);
   }
 }

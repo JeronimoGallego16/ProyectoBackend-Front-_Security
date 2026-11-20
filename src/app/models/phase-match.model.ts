@@ -6,4 +6,15 @@ export interface PhaseMatch {
   duration: string;
   state: string;
   phaseId: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  roundName?: string | null;
+  bracketPosition?: number | null;
+  nextMatchId?: number | null;
+  isThirdPlace?: boolean;
+  resultRegistered: boolean;
 }

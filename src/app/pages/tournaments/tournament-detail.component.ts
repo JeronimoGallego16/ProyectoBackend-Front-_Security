@@ -7,7 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, finalize } from 'rxjs';
+import { finalize } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import {
@@ -23,12 +23,11 @@ import {
   UpdateFinalPhaseDTO,
 } from 'src/app/models/dtos/phase-request.dto';
 import { FeedbackCase } from 'src/app/models/feedback-case';
-import { PhaseMatch } from 'src/app/models/phase-match.model';
+import { DevelopmentMatch, DevelopmentPhase } from 'src/app/models/tournament.model';
 import { Phase } from 'src/app/models/phase.model';
 import { Tournament } from 'src/app/models/tournament.model';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
-import { PhaseMatchService } from 'src/app/services/phase-match.service';
 import { PhaseService } from 'src/app/services/phase.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 
@@ -68,6 +67,13 @@ export class TournamentDetailComponent implements OnInit {
     { field: 'matchId', header: 'ID' },
     { field: 'duration', header: 'Duration' },
     { field: 'state', header: 'State' },
+    { field: 'roundName', header: 'Round' },
+    { field: 'bracketPosition', header: 'Position' },
+    { field: 'homeTeamName', header: 'Home' },
+    { field: 'awayTeamName', header: 'Away' },
+    { field: 'homeScore', header: 'Home score' },
+    { field: 'awayScore', header: 'Away score' },
+    { field: 'resultRegistered', header: 'Result' },
   ];
 
   public readonly phaseFields: FormFieldConfig[] = [
@@ -101,7 +107,9 @@ export class TournamentDetailComponent implements OnInit {
 
   public tournament: Tournament | null = null;
   public phases: Phase[] = [];
-  public matches: PhaseMatch[] = [];
+  public finalPhases: Phase[] = [];
+  public developmentPhases: DevelopmentPhase[] = [];
+  public matches: DevelopmentMatch[] = [];
   public phaseForm: FormGroup;
   public showPhaseForm = false;
   public isEditingPhase = false;
@@ -120,7 +128,6 @@ export class TournamentDetailComponent implements OnInit {
     private readonly router: Router,
     private readonly tournamentService: TournamentService,
     private readonly phaseService: PhaseService,
-    private readonly phaseMatchService: PhaseMatchService,
     private readonly feedbackHandlerService: FeedbackHandlerService
   ) {
     this.phaseForm = this.formBuilder.group({
@@ -150,18 +157,25 @@ export class TournamentDetailComponent implements OnInit {
 
   public loadDevelopment(): void {
     this.isLoading = true;
-    forkJoin({
-      tournament: this.tournamentService.findById(this.tournamentId),
-      phases: this.phaseService.findByTournament(this.tournamentId),
-      matches: this.phaseMatchService.findAll(),
-    })
+    this.tournamentService
+      .findDevelopment(this.tournamentId)
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: ({ tournament, phases, matches }) => {
-          this.tournament = tournament;
-          this.phases = phases;
-          const phaseIds = new Set(phases.map((phase) => phase.phaseId));
-          this.matches = matches.filter((match) => phaseIds.has(match.phaseId));
+        next: (development) => {
+          this.tournament = development.tournament;
+          this.developmentPhases = development.phases;
+          this.phases = development.phases.map((phase) => ({
+            phaseId: phase.phaseId,
+            name: phase.name,
+            order: phase.order,
+            tournamentId: phase.tournamentId,
+            type: phase.type,
+            isThirdPlace: phase.isThirdPlace,
+          }));
+          this.finalPhases = this.phases.filter((phase) => phase.type === 'FINAL');
+          this.matches = development.phases.flatMap((phase) =>
+            phase.matches ?? phase.bracket ?? []
+          );
         },
         error: (error: ApiError) =>
           this.feedbackHandlerService.error(
@@ -315,7 +329,7 @@ export class TournamentDetailComponent implements OnInit {
     this.phaseForm.reset({ name: '', order: '', isThirdPlace: false });
   }
 
-  public matchesForPhase(phaseId: number): PhaseMatch[] {
+  public matchesForPhase(phaseId: number): DevelopmentMatch[] {
     return this.matches.filter((match) => match.phaseId === phaseId);
   }
 

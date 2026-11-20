@@ -7,5 +7,12 @@ export interface Match {
   state: string;
   homeTeamId: number;
   awayTeamId: number;
-  phaseId?: number | null;
+  phaseId: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  roundName?: string | null;
+  bracketPosition?: number | null;
+  nextMatchId?: number | null;
+  isThirdPlace?: boolean;
+  resultRegistered: boolean;
 }

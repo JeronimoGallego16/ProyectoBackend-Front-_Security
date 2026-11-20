@@ -53,7 +53,7 @@
       </mat-card-header>
       <mat-card-content class="pt-4">
         <app-data-table
-          [data]="phases"
+          [data]="finalPhases"
           [columns]="phaseColumns"
           (view)="onViewPhase($event)"
           (edit)="onEditPhase($event)"
@@ -63,17 +63,78 @@
     </mat-card>
 
     <div class="grid gap-6">
-      @for (phase of phases; track phase.phaseId) {
+      @for (phase of developmentPhases; track phase.phaseId) {
         <mat-card>
           <mat-card-header>
             <mat-card-title>{{ phase.name }} ({{ phase.type }})</mat-card-title>
           </mat-card-header>
           <mat-card-content class="pt-4">
-            <app-data-table
-              [data]="matchesForPhase(phase.phaseId)"
-              [columns]="matchColumns"
-              [showActions]="false"
-            ></app-data-table>
+            @if (phase.type === 'FINAL') {
+              @if (phase.bracket.length) {
+                <div class="grid gap-3">
+                  @for (match of phase.bracket; track match.matchId) {
+                    <div class="border rounded-lg p-4 flex items-center justify-between">
+                      <div>
+                        <strong>{{ match.roundName || 'Final stage' }}</strong>
+                        <span class="text-gray-500"> · Position {{ match.bracketPosition ?? '-' }}</span>
+                      </div>
+                      <div class="text-center">
+                        {{ match.homeTeamName || ('Team #' + match.homeTeamId) }}
+                        <strong class="mx-3">
+                          {{ match.resultRegistered ? (match.homeScore + ' - ' + match.awayScore) : 'Pending' }}
+                        </strong>
+                        {{ match.awayTeamName || ('Team #' + match.awayTeamId) }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-gray-500">No bracket matches registered.</p>
+              }
+            } @else {
+              @for (group of phase.groups; track group.groupId) {
+                <div class="mb-6">
+                  <h3 class="font-semibold mb-2">
+                    Group {{ group.letterOrNumber }} · {{ group.teams.length }}/{{ group.maxTeams }} teams
+                  </h3>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr>
+                          <th class="px-3 py-2 border-b">Team</th>
+                          <th class="px-3 py-2 border-b">Played</th>
+                          <th class="px-3 py-2 border-b">Won</th>
+                          <th class="px-3 py-2 border-b">Drawn</th>
+                          <th class="px-3 py-2 border-b">Lost</th>
+                          <th class="px-3 py-2 border-b">GF</th>
+                          <th class="px-3 py-2 border-b">GA</th>
+                          <th class="px-3 py-2 border-b">Diff</th>
+                          <th class="px-3 py-2 border-b">Points</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of group.standings; track row.teamId) {
+                          <tr>
+                            <td class="px-3 py-2 border-b">{{ row.teamName }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.played }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.won }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.drawn }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.lost }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.goalsFor }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.goalsAgainst }}</td>
+                            <td class="px-3 py-2 border-b">{{ row.goalDifference }}</td>
+                            <td class="px-3 py-2 border-b font-semibold">{{ row.points }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+              @if (!phase.groups.length) {
+                <p class="text-gray-500">No groups registered for this phase.</p>
+              }
+            }
           </mat-card-content>
         </mat-card>
       }

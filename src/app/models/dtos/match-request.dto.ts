@@ -6,6 +6,13 @@ export interface CreateMatchDTO {
   state: string;
   homeTeamId: number;
   awayTeamId: number;
+  phaseId: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  roundName?: string;
+  bracketPosition?: number;
+  nextMatchId?: number | null;
+  isThirdPlace?: boolean;
 }
 
 /**
@@ -16,4 +23,16 @@ export interface UpdateMatchDTO {
   state?: string;
   homeTeamId?: number;
   awayTeamId?: number;
+  phaseId?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  roundName?: string | null;
+  bracketPosition?: number | null;
+  nextMatchId?: number | null;
+  isThirdPlace?: boolean;
+}
+
+export interface MatchResultDTO {
+  homeScore: number;
+  awayScore: number;
 }

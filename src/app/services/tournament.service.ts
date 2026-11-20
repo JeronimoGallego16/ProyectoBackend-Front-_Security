@@ -6,7 +6,7 @@ import {
   CreateTournamentDTO,
   UpdateTournamentDTO,
 } from '../models/dtos/tournament-request.dto';
-import { Tournament } from '../models/tournament.model';
+import { Tournament, TournamentDevelopment } from '../models/tournament.model';
 
 /**
  * Service responsible for accessing the tournament REST endpoints.
@@ -40,5 +40,9 @@ export class TournamentService {
 
   public delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  public findDevelopment(id: number): Observable<TournamentDevelopment> {
+    return this.http.get<TournamentDevelopment>(`${this.baseUrl}/${id}/development`);
   }
 }

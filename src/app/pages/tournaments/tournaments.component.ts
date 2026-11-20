@@ -93,8 +93,14 @@ export class TournamentsComponent implements OnInit {
     {
       name: 'status',
       label: 'Status',
-      type: 'text',
-      placeholder: 'Tournament status',
+      type: 'select',
+      options: [
+        { value: 'DRAFT', label: 'Draft' },
+        { value: 'PUBLISHED', label: 'Published' },
+        { value: 'IN_PROGRESS', label: 'In progress' },
+        { value: 'FINISHED', label: 'Finished' },
+        { value: 'CANCELLED', label: 'Cancelled' },
+      ],
     },
     {
       name: 'capacity',
@@ -163,6 +169,17 @@ export class TournamentsComponent implements OnInit {
           Validators.max(Number.MAX_SAFE_INTEGER),
         ],
       ],
+    });
+    this.tournamentForm.addValidators(() => {
+      const startDate = this.tournamentForm.get('startDate')?.value;
+      const endDate = this.tournamentForm.get('endDate')?.value;
+      if (!startDate || !endDate) {
+        return null;
+      }
+
+      const start = this.toIsoDate(startDate);
+      const end = this.toIsoDate(endDate);
+      return end >= start ? null : { endDateBeforeStartDate: true };
     });
   }
 
@@ -275,6 +292,13 @@ export class TournamentsComponent implements OnInit {
   public onSubmit(): void {
     if (this.tournamentForm.invalid) {
       this.tournamentForm.markAllAsTouched();
+      if (this.tournamentForm.hasError('endDateBeforeStartDate')) {
+        this.feedbackHandlerService.warning(
+          FeedbackCase.BAD_REQUEST,
+          'The end date cannot be before the start date.'
+        );
+        return;
+      }
       this.feedbackHandlerService.warning(
         FeedbackCase.BAD_REQUEST,
         'Please complete all required fields with valid values before saving.'
