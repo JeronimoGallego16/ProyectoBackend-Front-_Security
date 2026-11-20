@@ -6,49 +6,56 @@
       class="grid gap-4 pt-2"
     >
       @for (field of fields; track field.name) {
-        <mat-form-field appearance="outline">
-          <mat-label>{{ field.label }}</mat-label>
-
-          @if (field.type === 'checkbox') {
+        @if (field.type === 'checkbox') {
+          <div class="flex flex-col gap-1">
             <mat-checkbox [formControlName]="field.name">
               {{ field.label }}
             </mat-checkbox>
-          } @else if (field.type === 'textarea') {
-            <textarea
-              matInput
-              [formControlName]="field.name"
-              [placeholder]="field.placeholder ?? ''"
-            ></textarea>
-          } @else if (field.type === 'select') {
-            <mat-select [formControlName]="field.name">
-              @for (option of field.options ?? []; track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-              }
-            </mat-select>
-          } @else if (field.type === 'date') {
-            <ng-container>
-              <input
+            @if (field.hint) {
+              <span class="text-sm text-gray-500">{{ field.hint }}</span>
+            }
+          </div>
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+
+            @if (field.type === 'textarea') {
+              <textarea
                 matInput
                 [formControlName]="field.name"
                 [placeholder]="field.placeholder ?? ''"
-                [matDatepicker]="picker"
+              ></textarea>
+            } @else if (field.type === 'select') {
+              <mat-select [formControlName]="field.name">
+                @for (option of field.options ?? []; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            } @else if (field.type === 'date') {
+              <ng-container>
+                <input
+                  matInput
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder ?? ''"
+                  [matDatepicker]="picker"
+                />
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </ng-container>
+            } @else {
+              <input
+                matInput
+                [type]="field.type"
+                [formControlName]="field.name"
+                [placeholder]="field.placeholder ?? ''"
               />
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </ng-container>
-          } @else {
-            <input
-              matInput
-              [type]="field.type"
-              [formControlName]="field.name"
-              [placeholder]="field.placeholder ?? ''"
-            />
-          }
+            }
 
-          @if (field.hint) {
-            <mat-hint>{{ field.hint }}</mat-hint>
-          }
-        </mat-form-field>
+            @if (field.hint) {
+              <mat-hint>{{ field.hint }}</mat-hint>
+            }
+          </mat-form-field>
+        }
       }
 
       <div class="flex gap-2 justify-end">

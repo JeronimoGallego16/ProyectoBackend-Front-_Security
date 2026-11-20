@@ -25,10 +25,14 @@ import {
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Match } from 'src/app/models/business/match.model';
 import { Phase } from 'src/app/models/phase.model';
+import { Team } from 'src/app/models/business/team.model';
+import { TeamSport } from 'src/app/models/business/team-sport.model';
+import { Tournament } from 'src/app/models/tournament.model';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { MatchService } from 'src/app/services/business/match.service';
 import { PhaseService } from 'src/app/services/phase.service';
+import { TeamSportService } from 'src/app/services/business/team-sport.service';
 import { TeamService } from 'src/app/services/business/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 
@@ -90,12 +94,14 @@ export class MatchesComponent implements OnInit {
       name: 'homeTeamId',
       label: 'Home team',
       type: 'select',
+      hint: 'Teams must be assigned to the sport of the selected phase.',
       options: [],
     },
     {
       name: 'awayTeamId',
       label: 'Away team',
       type: 'select',
+      hint: 'Teams must be assigned to the sport of the selected phase.',
       options: [],
     },
     {
@@ -177,6 +183,9 @@ export class MatchesComponent implements OnInit {
   public selectedMatch: Match | null = null;
   public submissionError: string | null = null;
   private readonly phasesById = new Map<number, Phase>();
+  private readonly tournamentsById = new Map<number, Tournament>();
+  private teams: Team[] = [];
+  private teamSports: TeamSport[] = [];
   private editingMatchId: number | null = null;
   private originalMatch: Match | null = null;
   private pendingResultMatch: Match | null = null;
@@ -192,6 +201,7 @@ export class MatchesComponent implements OnInit {
     private readonly formBuilder: FormBuilder,
     private readonly matchService: MatchService,
     private readonly teamService: TeamService,
+    private readonly teamSportService: TeamSportService,
     private readonly tournamentService: TournamentService,
     private readonly phaseService: PhaseService,
     private readonly feedbackHandlerService: FeedbackHandlerService
@@ -260,6 +270,9 @@ export class MatchesComponent implements OnInit {
         ],
       ],
     });
+    this.matchForm.get('phaseId')?.valueChanges.subscribe((phaseId) => {
+      this.updateEligibleTeamOptions(phaseId);
+    });
     this.matchForm.valueChanges.subscribe(() => {
       this.submissionError = null;
     });
@@ -277,16 +290,15 @@ export class MatchesComponent implements OnInit {
     forkJoin({
       teams: this.teamService.findAll(),
       tournaments: this.tournamentService.findAll(),
+      teamSports: this.teamSportService.findAll(),
     }).subscribe({
-      next: ({ teams, tournaments }) => {
-        this.fields[2].options = teams.map((team) => ({
-          value: team.teamId,
-          label: `${team.name} (#${team.teamId})`,
-        }));
-        this.fields[3].options = teams.map((team) => ({
-          value: team.teamId,
-          label: `${team.name} (#${team.teamId})`,
-        }));
+      next: ({ teams, tournaments, teamSports }) => {
+        this.teams = teams;
+        this.teamSports = teamSports;
+        this.tournamentsById.clear();
+        tournaments.forEach((tournament) =>
+          this.tournamentsById.set(tournament.tournamentId, tournament)
+        );
 
         if (tournaments.length === 0) {
           this.setPhaseOptions([]);
@@ -299,7 +311,7 @@ export class MatchesComponent implements OnInit {
           )
         ).subscribe({
           next: (phaseLists) =>
-            this.setPhaseOptions(phaseLists.flat()),
+              this.setPhaseOptions(phaseLists.flat()),
           error: (error: { status?: number }) =>
             this.feedbackHandlerService.error(
               String(error?.status ?? FeedbackCase.SERVER_ERROR),
@@ -310,7 +322,7 @@ export class MatchesComponent implements OnInit {
       error: (error: { status?: number }) =>
         this.feedbackHandlerService.error(
           String(error?.status ?? FeedbackCase.SERVER_ERROR),
-          'Could not load teams and tournaments. Please try again.'
+          'Could not load teams, tournaments, or team-sport assignments. Please try again.'
         ),
     });
   }
@@ -322,6 +334,48 @@ export class MatchesComponent implements OnInit {
       value: phase.phaseId,
       label: `${phase.name} (#${phase.phaseId}, tournament #${phase.tournamentId})`,
     }));
+    this.updateEligibleTeamOptions(this.matchForm.get('phaseId')?.value);
+  }
+
+  private updateEligibleTeamOptions(phaseId: number | string | null): void {
+    const phase = this.phasesById.get(Number(phaseId));
+    const tournament = phase
+      ? this.tournamentsById.get(phase.tournamentId)
+      : undefined;
+    const eligibleTeams =
+      tournament && phaseId
+        ? this.teams.filter((team) =>
+            this.teamSports.some(
+              (assignment) =>
+                assignment.teamId === team.teamId &&
+                assignment.sportId === tournament.sportId
+            )
+          )
+        : [];
+    const eligibleTeamIds = new Set(
+      eligibleTeams.map((team) => team.teamId)
+    );
+
+    for (const fieldName of ['homeTeamId', 'awayTeamId']) {
+      const field = this.fields.find((item) => item.name === fieldName);
+      if (field) {
+        field.options = eligibleTeams.map((team) => ({
+          value: team.teamId,
+          label: `${team.name} (#${team.teamId})`,
+        }));
+      }
+
+      const control = this.matchForm.get(fieldName);
+      const currentTeamId = Number(control?.value);
+      if (
+        control &&
+        control.value !== '' &&
+        control.value !== null &&
+        !eligibleTeamIds.has(currentTeamId)
+      ) {
+        control.setValue('', { emitEvent: false });
+      }
+    }
   }
 
   /**
@@ -527,17 +581,26 @@ export class MatchesComponent implements OnInit {
       return;
     }
 
+    const phase = this.phasesById.get(Number(formValue.phaseId));
+    const tournament = phase
+      ? this.tournamentsById.get(phase.tournamentId)
+      : undefined;
+    const eligibleTeamIds = new Set(
+      tournament
+        ? this.teamSports
+            .filter(
+              (assignment) => assignment.sportId === tournament.sportId
+            )
+            .map((assignment) => assignment.teamId)
+        : []
+    );
     if (
-      !this.phasesById.has(Number(formValue.phaseId)) ||
-      !this.fields[2].options?.some(
-        (option) => Number(option.value) === Number(formValue.homeTeamId)
-      ) ||
-      !this.fields[3].options?.some(
-        (option) => Number(option.value) === Number(formValue.awayTeamId)
-      )
+      !phase ||
+      !eligibleTeamIds.has(Number(formValue.homeTeamId)) ||
+      !eligibleTeamIds.has(Number(formValue.awayTeamId))
     ) {
       this.submissionError =
-        'One of the selected teams or the phase is no longer available. Reload the page and select them again.';
+        'Both teams must be assigned to the sport of the selected phase. Manage the assignments in Assign Sports, then select the teams again.';
       return;
     }
 
@@ -613,7 +676,7 @@ export class MatchesComponent implements OnInit {
       return 'The selected team or phase was not found. Verify the selected records and try again.';
     }
     if (error.status === 400 || error.status === 422) {
-      return 'The match data was rejected. Verify that both teams belong to the sport of the selected phase.';
+      return 'The match data was rejected. Verify that both teams are assigned to the sport of the selected phase in Assign Sports.';
     }
     if (error.status === 409) {
       return 'The home and away teams must be different.';
