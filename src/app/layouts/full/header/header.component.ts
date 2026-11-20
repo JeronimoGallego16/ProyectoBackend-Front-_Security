@@ -7,24 +7,20 @@ import {
   Input,
   ViewEncapsulation,
 } from '@angular/core';
-import { TablerIconsModule } from 'angular-tabler-icons';
-import { AppSettings } from 'src/app/config';
 import { MaterialModule } from 'src/app/material.module';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { CoreService } from 'src/app/services/core.service';
-import { AuthService } from 'src/app/services/auth.service';
+import { AuthService } from 'src/app/services/security/auth.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
-import { ProfileService } from 'src/app/services/profile.service';
-import { Profile } from 'src/app/models/profile.model';
+import { ProfileService } from 'src/app/services/security/profile.service';
+import { Profile } from 'src/app/models/security/profile.model';
 import { catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-header',
   imports: [
     MaterialModule,
-    TablerIconsModule,
   ],
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None
@@ -32,13 +28,10 @@ import { catchError, of } from 'rxjs';
 export class HeaderComponent implements OnInit {
   @Input() showToggle = true;
   @Output() toggleMobileNav = new EventEmitter<void>();
-  @Output() optionsChange = new EventEmitter<AppSettings>();
   isLoggingOut = false;
   public profileImageUrl: string | null = null;
-  public options = this.settings.getOptions();
 
   constructor(
-    private readonly settings: CoreService,
     private readonly authService: AuthService,
     private readonly profileService: ProfileService,
     private readonly router: Router,
@@ -59,11 +52,6 @@ export class HeaderComponent implements OnInit {
 
   private setProfileImage(profile: Profile | null): void {
     this.profileImageUrl = this.profileService.resolveImageUrl(profile?.profileImageUrl);
-  }
-
-  public setLightDark(theme: 'light' | 'dark'): void {
-    this.options = { ...this.options, theme };
-    this.optionsChange.emit(this.options);
   }
 
   /**

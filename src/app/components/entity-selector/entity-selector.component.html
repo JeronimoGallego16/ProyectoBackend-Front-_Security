@@ -1,0 +1,24 @@
+<div class="overflow-hidden rounded-lg border">
+  <div class="border-b bg-gray-50 px-4 py-3">
+    <h2 class="text-sm font-semibold text-gray-700">{{ title }}</h2>
+  </div>
+  <div class="max-h-[600px] overflow-y-auto">
+    @for (option of options; track option.id) {
+      <button
+        type="button"
+        class="w-full border-b px-4 py-3 text-left transition-colors hover:bg-gray-50"
+        [class.bg-blue-50]="selectedId === option.id"
+        (click)="selectionChange.emit(option.id)"
+      >
+        <div class="font-medium text-gray-800">{{ option.label }}</div>
+        @if (option.description) {
+          <div class="truncate text-xs text-gray-500">{{ option.description }}</div>
+        }
+      </button>
+    } @empty {
+      <div class="px-4 py-6 text-center text-sm text-gray-400">
+        {{ emptyMessage }}
+      </div>
+    }
+  </div>
+</div>

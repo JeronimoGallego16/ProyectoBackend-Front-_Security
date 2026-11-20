@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MaterialModule } from 'src/app/material.module';
+import { Permission } from 'src/app/models/security/permission.model';
 
 /**
- * Reusable presentational matrix that renders selectable permissions as columns
- * and entities/resources as rows.
+ * Displays permissions in an entity-by-HTTP-method matrix with one checkbox
+ * for each endpoint permission.
  */
 @Component({
   selector: 'app-selectable-table',
@@ -13,95 +14,104 @@ import { MaterialModule } from 'src/app/material.module';
   styleUrls: ['./selectable-table.component.scss'],
 })
 export class SelectableTableComponent {
-  /**
-   * List of permissions represented as matrix columns.
-   */
-  @Input() public matrixColumns: any[] = [];
+  /** Endpoint permissions displayed in the matrix. */
+  @Input() public permissions: ReadonlyArray<Permission> = [];
+
+  /** Identifiers of the endpoint permissions that are currently selected. */
+  @Input() public selectedPermissionIds: ReadonlyArray<number> = [];
+
+  /** Emits the identifiers of all selected endpoint permissions. */
+  @Output() public selectedPermissionIdsChange = new EventEmitter<number[]>();
+
+  private readonly preferredMethodOrder = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+  ];
 
   /**
-   * List of entities/resources represented as matrix rows.
+   * Returns the distinct entity names used by the endpoint permissions.
+   *
+   * @returns Sorted entity names, including a fallback for missing entities.
    */
-  @Input() public matrixRows: any[] = [];
-
-  /**
-   * Property name used to identify a matrix column.
-   */
-  @Input() public matrixColumnIdField = 'id';
-
-  /**
-   * Property name used to identify a matrix row.
-   */
-  @Input() public matrixRowIdField = 'entity';
-
-  /**
-   * Stores selected matrix cells as "rowKey|columnKey".
-   */
-  private readonly selectedMatrixCells = new Set<string>();
-
-  /**
-   * Preselected matrix cells in matrix mode.
-   */
-  @Input()
-  public set initialSelectedMatrixCells(cells: ReadonlyArray<string> | null) {
-    this.selectedMatrixCells.clear();
-    (cells ?? []).forEach((cell) => this.selectedMatrixCells.add(cell));
+  public get entities(): string[] {
+    return Array.from(
+      new Set(this.permissions.map((permission) => this.getEntityName(permission)))
+    ).sort((first, second) => first.localeCompare(second));
   }
 
   /**
-   * Emits matrix selection changes as selected permission objects.
+   * Returns distinct HTTP methods with common methods in a stable order.
+   *
+   * @returns HTTP methods present in the permission catalog.
    */
-  @Output() public matrixSelectionChange = new EventEmitter<any[]>();
+  public get methods(): string[] {
+    const availableMethods = new Set(
+      this.permissions.map((permission) => permission.method.toUpperCase())
+    );
+    const preferredMethods = this.preferredMethodOrder.filter((method) =>
+      availableMethods.delete(method)
+    );
 
-  /**
-   * Clears the current selection and notifies the parent component.
-   */
-  public clearSelection(): void {
-    this.selectedMatrixCells.clear();
-    this.matrixSelectionChange.emit([]);
+    return [...preferredMethods, ...Array.from(availableMethods).sort()];
   }
 
   /**
-   * Builds matrix cell key.
+   * Returns permissions for one entity and HTTP method cell.
+   *
+   * @param entity - Entity row displayed in the matrix.
+   * @param method - HTTP method column displayed in the matrix.
+   * @returns Endpoint permissions belonging to the selected cell.
    */
-  public getMatrixCellKey(row: any, column: any): string {
-    const rowKey = row[this.matrixRowIdField];
-    const columnKey = column[this.matrixColumnIdField];
-    return `${rowKey}|${columnKey}`;
+  public getCellPermissions(entity: string, method: string): Permission[] {
+    return this.permissions
+      .filter(
+        (permission) =>
+          this.getEntityName(permission) === entity &&
+          permission.method.toUpperCase() === method
+      )
+      .slice()
+      .sort((first, second) => first.url.localeCompare(second.url));
   }
 
   /**
-   * Checks if matrix cell is selected.
+   * Checks whether an endpoint permission is selected.
+   *
+   * @param permissionId - Identifier of the endpoint permission.
+   * @returns True when the permission is selected.
    */
-  public isMatrixCellSelected(row: any, column: any): boolean {
-    return this.selectedMatrixCells.has(this.getMatrixCellKey(row, column));
+  public isSelected(permissionId: number): boolean {
+    return this.selectedPermissionIds.includes(permissionId);
   }
 
   /**
-   * Toggles matrix cell selection.
+   * Emits the updated selection after a permission checkbox changes.
+   *
+   * @param permissionId - Identifier of the changed endpoint permission.
+   * @param checked - Whether the permission is now selected.
    */
-  public toggleMatrixCell(row: any, column: any, checked: boolean): void {
-    const key = this.getMatrixCellKey(row, column);
+  public togglePermission(permissionId: number, checked: boolean): void {
+    const selectedIds = new Set(this.selectedPermissionIds);
     if (checked) {
-      this.selectedMatrixCells.add(key);
+      selectedIds.add(permissionId);
     } else {
-      this.selectedMatrixCells.delete(key);
+      selectedIds.delete(permissionId);
     }
-    this.emitMatrixSelection();
+
+    this.selectedPermissionIdsChange.emit(
+      Array.from(selectedIds).sort((first, second) => first - second)
+    );
   }
 
   /**
-   * Emits matrix selection.
+   * Resolves the entity label, grouping missing entity values safely.
+   *
+   * @param permission - Endpoint permission to inspect.
+   * @returns The entity name or an uncategorized label.
    */
-  private emitMatrixSelection(): void {
-    const selected: any[] = [];
-    this.selectedMatrixCells.forEach((key) => {
-      const [rowKey, columnKey] = key.split('|');
-      const row = this.matrixRows.find((r) => String(r[this.matrixRowIdField]) === rowKey);
-      const column = this.matrixColumns.find((c) => String(c[this.matrixColumnIdField]) === columnKey);
-      if (row && column) {
-        selected.push({ row, column, permission: column });
-      }
-    });
-    this.matrixSelectionChange.emit(selected);
+  private getEntityName(permission: Permission): string {
+    return permission.entity?.trim() || 'Uncategorized';
   }
 }

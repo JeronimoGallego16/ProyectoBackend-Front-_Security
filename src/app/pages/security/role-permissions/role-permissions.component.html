@@ -1,0 +1,63 @@
+<div class="p-6">
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Role Permissions</h1>
+  </div>
+
+  <div class="grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <app-entity-selector
+        title="Roles"
+        [options]="roleOptions"
+        [selectedId]="roleId"
+        emptyMessage="No roles available"
+        (selectionChange)="onRoleOptionSelect($event)"
+      ></app-entity-selector>
+    </div>
+
+    <div class="col-span-12 md:col-span-9">
+      @if (roleName) {
+        <div class="mb-3">
+          <h2 class="text-lg font-semibold text-gray-800">{{ roleName }}</h2>
+          @if (roleDescription) {
+            <p class="text-gray-600 text-sm">{{ roleDescription }}</p>
+          }
+        </div>
+      } @else {
+        <div class="mb-3 text-gray-500">Select a role from the list to manage permissions.</div>
+      }
+
+      @if (isLoading) {
+        <div class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (rolePermissionsLoadError) {
+        <div class="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          {{ rolePermissionsLoadError }}
+        </div>
+      } @else if (roleId) {
+        <app-selectable-table
+          [permissions]="permissions"
+          [selectedPermissionIds]="selectedPermissionIds"
+          (selectedPermissionIdsChange)="onPermissionSelectionChange($event)"
+        ></app-selectable-table>
+
+        <div class="flex justify-end mt-4">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="isSaving"
+            (click)="onAssignPermissions()"
+          >
+            @if (isSaving) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>save</mat-icon>
+            }
+            Save permissions
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -23,11 +23,11 @@ import {
   UpdateTournamentDTO,
 } from 'src/app/models/dtos/tournament-request.dto';
 import { FeedbackCase } from 'src/app/models/feedback-case';
-import { Sport } from 'src/app/models/sport.model';
+import { Sport } from 'src/app/models/business/sport.model';
 import { Tournament } from 'src/app/models/tournament.model';
 import { MaterialModule } from 'src/app/material.module';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
-import { SportService } from 'src/app/services/sport.service';
+import { SportService } from 'src/app/services/business/sport.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 
 interface ApiError {
