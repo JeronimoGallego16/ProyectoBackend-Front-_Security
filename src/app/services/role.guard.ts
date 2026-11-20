@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of, throwError } from 'rxjs';
-import { AuthorizationService } from './authorization.service';
+import { AuthorizationService } from './security/authorization.service';
 
 /**
  * Restricts a route to users who have the role declared in route data.

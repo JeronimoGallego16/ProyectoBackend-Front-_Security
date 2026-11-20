@@ -10,11 +10,11 @@ import {
 import { MaterialModule } from 'src/app/material.module';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { AuthService } from 'src/app/services/auth.service';
+import { AuthService } from 'src/app/services/security/auth.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { FeedbackCase } from 'src/app/models/feedback-case';
-import { ProfileService } from 'src/app/services/profile.service';
-import { Profile } from 'src/app/models/profile.model';
+import { ProfileService } from 'src/app/services/security/profile.service';
+import { Profile } from 'src/app/models/security/profile.model';
 import { catchError, of } from 'rxjs';
 
 @Component({

@@ -2,7 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { switchMap } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { CsrfService } from './csrf.service';
+import { CsrfService } from './security/csrf.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isBusinessApiRequest = request.url.startsWith(

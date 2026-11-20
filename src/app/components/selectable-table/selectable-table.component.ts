@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MaterialModule } from 'src/app/material.module';
-import { Permission } from 'src/app/models/permission.model';
+import { Permission } from 'src/app/models/security/permission.model';
 
 /**
  * Displays permissions in an entity-by-HTTP-method matrix with one checkbox

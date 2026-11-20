@@ -17,7 +17,7 @@ import { HeaderComponent } from './header/header.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { AppNavItemComponent } from './sidebar/nav-item/nav-item.component';
 import { navItems } from './sidebar/sidebar-data';
-import { AuthorizationService } from 'src/app/services/authorization.service';
+import { AuthorizationService } from 'src/app/services/security/authorization.service';
 import { FeedbackHandlerService } from 'src/app/services/feedback-handler.service';
 import { NavItem } from './sidebar/nav-item/nav-item';
 
