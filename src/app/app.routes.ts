@@ -61,14 +61,14 @@ export const routes: Routes = [
       {
         path: 'tournaments',
         loadComponent: () =>
-          import('./pages/tournaments/tournaments.component').then(
+          import('./pages/business/tournaments/tournaments.component').then(
             (m) => m.TournamentsComponent
           ),
       },
       {
         path: 'tournaments/:id',
         loadComponent: () =>
-          import('./pages/tournaments/tournament-detail.component').then(
+          import('./pages/business/tournaments/tournament-detail.component').then(
             (m) => m.TournamentDetailComponent
           ),
       },
