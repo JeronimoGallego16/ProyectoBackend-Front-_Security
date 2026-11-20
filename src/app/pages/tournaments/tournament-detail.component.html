@@ -81,7 +81,13 @@
                       <div class="text-center">
                         {{ match.homeTeamName || ('Team #' + match.homeTeamId) }}
                         <strong class="mx-3">
-                          {{ match.resultRegistered ? (match.homeScore + ' - ' + match.awayScore) : 'Pending' }}
+                          {{
+                            match.resultRegistered &&
+                            match.homeScore != null &&
+                            match.awayScore != null
+                              ? (match.homeScore + ' - ' + match.awayScore)
+                              : 'Pending'
+                          }}
                         </strong>
                         {{ match.awayTeamName || ('Team #' + match.awayTeamId) }}
                       </div>

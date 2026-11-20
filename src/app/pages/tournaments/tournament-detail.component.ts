@@ -163,18 +163,28 @@ export class TournamentDetailComponent implements OnInit {
       .subscribe({
         next: (development) => {
           this.tournament = development.tournament;
-          this.developmentPhases = development.phases;
-          this.phases = development.phases.map((phase) => ({
+          this.developmentPhases = development.phases.map((phase) => ({
+            ...phase,
+            tournamentId:
+              phase.tournamentId ?? development.tournament.tournamentId,
+            matches: (phase.matches ?? []).map((match) =>
+              this.normalizeDevelopmentMatch(match, phase.phaseId)
+            ),
+            bracket: (phase.bracket ?? []).map((match) =>
+              this.normalizeDevelopmentMatch(match, phase.phaseId)
+            ),
+          }));
+          this.phases = this.developmentPhases.map((phase) => ({
             phaseId: phase.phaseId,
             name: phase.name,
             order: phase.order,
-            tournamentId: phase.tournamentId,
+            tournamentId: phase.tournamentId ?? development.tournament.tournamentId,
             type: phase.type,
             isThirdPlace: phase.isThirdPlace,
           }));
           this.finalPhases = this.phases.filter((phase) => phase.type === 'FINAL');
-          this.matches = development.phases.flatMap((phase) =>
-            phase.matches ?? phase.bracket ?? []
+          this.matches = this.developmentPhases.flatMap((phase) =>
+            phase.matches.length ? phase.matches : phase.bracket
           );
         },
         error: (error: ApiError) =>
@@ -331,6 +341,27 @@ export class TournamentDetailComponent implements OnInit {
 
   public matchesForPhase(phaseId: number): DevelopmentMatch[] {
     return this.matches.filter((match) => match.phaseId === phaseId);
+  }
+
+  private normalizeDevelopmentMatch(
+    match: DevelopmentMatch,
+    phaseId: number
+  ): DevelopmentMatch {
+    const hasScores =
+      match.homeScore !== null &&
+      match.homeScore !== undefined &&
+      match.awayScore !== null &&
+      match.awayScore !== undefined;
+
+    return {
+      ...match,
+      phaseId: match.phaseId ?? phaseId,
+      homeTeamId: match.homeTeamId ?? match.homeTeam?.teamId,
+      homeTeamName: match.homeTeamName ?? match.homeTeam?.name,
+      awayTeamId: match.awayTeamId ?? match.awayTeam?.teamId,
+      awayTeamName: match.awayTeamName ?? match.awayTeam?.name,
+      resultRegistered: match.resultRegistered && hasScores,
+    };
   }
 
   private buildUpdatePayload(value: {

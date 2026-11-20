@@ -54,11 +54,13 @@ export interface DevelopmentMatch {
   matchId: number;
   duration: string;
   state: string;
-  phaseId: number;
-  homeTeamId: number;
-  awayTeamId: number;
+  phaseId?: number;
+  homeTeamId?: number;
   homeTeamName?: string;
+  awayTeamId?: number;
   awayTeamName?: string;
+  homeTeam?: DevelopmentTeam | null;
+  awayTeam?: DevelopmentTeam | null;
   homeScore?: number | null;
   awayScore?: number | null;
   roundName?: string | null;
@@ -72,7 +74,7 @@ export interface DevelopmentPhase {
   phaseId: number;
   name: string;
   order: number;
-  tournamentId: number;
+  tournamentId?: number;
   type: 'GROUP' | 'FINAL';
   isThirdPlace: boolean;
   groups: DevelopmentGroup[];
