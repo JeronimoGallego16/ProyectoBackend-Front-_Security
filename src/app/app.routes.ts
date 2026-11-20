@@ -80,6 +80,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'registrations',
+        loadComponent: () =>
+          import('./pages/business/registrations/registrations.component').then(
+            (m) => m.RegistrationsComponent
+          ),
+      },
+      {
         path: 'role-permissions',
         canActivate: [roleGuard],
         data: { requiredRole: 'ADMIN' },

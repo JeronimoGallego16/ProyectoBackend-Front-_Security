@@ -6,6 +6,7 @@ export interface CreateTournamentDTO {
   modality: string;
   startDate: string;
   endDate: string;
+  registrationEndDate?: string;
   status: string;
   capacity: number;
   sportId: number;
@@ -19,6 +20,7 @@ export interface UpdateTournamentDTO {
   modality?: string;
   startDate?: string;
   endDate?: string;
+  registrationEndDate?: string | null;
   status?: string;
   capacity?: number;
   sportId?: number;

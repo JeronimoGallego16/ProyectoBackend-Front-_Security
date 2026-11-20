@@ -59,6 +59,7 @@ export class TournamentsComponent implements OnInit {
     { field: 'name', header: 'Name' },
     { field: 'modality', header: 'Modality' },
     { field: 'startDate', header: 'Start date' },
+    { field: 'registrationEndDate', header: 'Registration closes' },
     { field: 'endDate', header: 'End date' },
     { field: 'status', header: 'Status' },
     { field: 'capacity', header: 'Capacity' },
@@ -85,6 +86,12 @@ export class TournamentsComponent implements OnInit {
       placeholder: 'Start date',
     },
     {
+      name: 'registrationEndDate',
+      label: 'Registration closes (optional)',
+      type: 'date',
+      placeholder: 'Registration end date',
+    },
+    {
       name: 'endDate',
       label: 'End date',
       type: 'date',
@@ -96,6 +103,7 @@ export class TournamentsComponent implements OnInit {
       type: 'select',
       options: [
         { value: 'DRAFT', label: 'Draft' },
+        { value: 'OPEN', label: 'Open for registrations' },
         { value: 'PUBLISHED', label: 'Published' },
         { value: 'IN_PROGRESS', label: 'In progress' },
         { value: 'FINISHED', label: 'Finished' },
@@ -121,6 +129,7 @@ export class TournamentsComponent implements OnInit {
     { key: 'name', label: 'Name' },
     { key: 'modality', label: 'Modality' },
     { key: 'startDate', label: 'Start date' },
+    { key: 'registrationEndDate', label: 'Registration closes' },
     { key: 'endDate', label: 'End date' },
     { key: 'status', label: 'Status' },
     { key: 'capacity', label: 'Capacity' },
@@ -151,6 +160,7 @@ export class TournamentsComponent implements OnInit {
       name: ['', [Validators.required, Validators.pattern(/\S/)]],
       modality: ['', [Validators.required, Validators.pattern(/\S/)]],
       startDate: ['', Validators.required],
+      registrationEndDate: [''],
       endDate: ['', Validators.required],
       status: ['', [Validators.required, Validators.pattern(/\S/)]],
       capacity: [
@@ -173,13 +183,21 @@ export class TournamentsComponent implements OnInit {
     this.tournamentForm.addValidators(() => {
       const startDate = this.tournamentForm.get('startDate')?.value;
       const endDate = this.tournamentForm.get('endDate')?.value;
+      const registrationEndDate =
+        this.tournamentForm.get('registrationEndDate')?.value;
       if (!startDate || !endDate) {
         return null;
       }
 
       const start = this.toIsoDate(startDate);
       const end = this.toIsoDate(endDate);
-      return end >= start ? null : { endDateBeforeStartDate: true };
+      if (end < start) {
+        return { endDateBeforeStartDate: true };
+      }
+      if (registrationEndDate && this.toIsoDate(registrationEndDate) > start) {
+        return { registrationEndDateAfterStartDate: true };
+      }
+      return null;
     });
   }
 
@@ -198,10 +216,13 @@ export class TournamentsComponent implements OnInit {
         next: ({ tournaments, sports }) => {
           this.tournaments = tournaments;
           this.sports = sports;
-          this.fields[6].options = sports.map((sport) => ({
+          const sportField = this.fields.find((field) => field.name === 'sportId');
+          if (sportField) {
+            sportField.options = sports.map((sport) => ({
             value: sport.sportId,
             label: `${sport.name} (#${sport.sportId})`,
-          }));
+            }));
+          }
         },
         error: (error: ApiError) =>
           this.feedbackHandlerService.error(
@@ -227,6 +248,9 @@ export class TournamentsComponent implements OnInit {
       name: tournament.name,
       modality: tournament.modality,
       startDate: this.toDateValue(tournament.startDate),
+      registrationEndDate: tournament.registrationEndDate
+        ? this.toDateValue(tournament.registrationEndDate)
+        : '',
       endDate: this.toDateValue(tournament.endDate),
       status: tournament.status,
       capacity: String(tournament.capacity),
@@ -296,6 +320,13 @@ export class TournamentsComponent implements OnInit {
         this.feedbackHandlerService.warning(
           FeedbackCase.BAD_REQUEST,
           'The end date cannot be before the start date.'
+        );
+        return;
+      }
+      if (this.tournamentForm.hasError('registrationEndDateAfterStartDate')) {
+        this.feedbackHandlerService.warning(
+          FeedbackCase.BAD_REQUEST,
+          'The registration deadline cannot be after the tournament start date.'
         );
         return;
       }
@@ -374,6 +405,7 @@ export class TournamentsComponent implements OnInit {
     name: string;
     modality: string;
     startDate: string;
+    registrationEndDate: string;
     endDate: string;
     status: string;
     capacity: string;
@@ -383,6 +415,7 @@ export class TournamentsComponent implements OnInit {
       name: '',
       modality: '',
       startDate: '',
+      registrationEndDate: '',
       endDate: '',
       status: '',
       capacity: '',
@@ -394,6 +427,7 @@ export class TournamentsComponent implements OnInit {
     name: string;
     modality: string;
     startDate: Date | string;
+    registrationEndDate: Date | string;
     endDate: Date | string;
     status: string;
     capacity: string;
@@ -407,7 +441,7 @@ export class TournamentsComponent implements OnInit {
   private buildCreatePayload(
     formValue: ReturnType<TournamentsComponent['getFormValue']>
   ): CreateTournamentDTO {
-    return {
+    const payload: CreateTournamentDTO = {
       name: formValue.name.trim(),
       modality: formValue.modality.trim(),
       startDate: this.toIsoDate(formValue.startDate),
@@ -416,6 +450,11 @@ export class TournamentsComponent implements OnInit {
       capacity: Number(formValue.capacity),
       sportId: Number(formValue.sportId),
     };
+    const registrationEndDate = this.toIsoDate(formValue.registrationEndDate);
+    if (registrationEndDate) {
+      payload.registrationEndDate = registrationEndDate;
+    }
+    return payload;
   }
 
   private buildUpdatePayload(
@@ -424,6 +463,7 @@ export class TournamentsComponent implements OnInit {
     const original = this.originalTournament;
     const payload: UpdateTournamentDTO = {};
     const startDate = this.toIsoDate(formValue.startDate);
+    const registrationEndDate = this.toIsoDate(formValue.registrationEndDate);
     const endDate = this.toIsoDate(formValue.endDate);
     const capacity = Number(formValue.capacity);
     const sportId = Number(formValue.sportId);
@@ -436,6 +476,13 @@ export class TournamentsComponent implements OnInit {
     }
     if (original && startDate !== original.startDate) {
       payload.startDate = startDate;
+    }
+    if (
+      original &&
+      (registrationEndDate || null) !==
+        (original.registrationEndDate?.slice(0, 10) || null)
+    ) {
+      payload.registrationEndDate = registrationEndDate || null;
     }
     if (original && endDate !== original.endDate) {
       payload.endDate = endDate;

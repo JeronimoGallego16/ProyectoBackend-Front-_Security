@@ -67,4 +67,9 @@ export const navItems: NavItem[] = [
     iconName: 'solar:football-line-duotone',
     route: '/team-sports',
   },
+  {
+    displayName: 'Registrations',
+    iconName: 'solar:clipboard-list-line-duotone',
+    route: '/registrations',
+  },
 ];

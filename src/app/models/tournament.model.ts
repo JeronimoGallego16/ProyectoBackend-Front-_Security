@@ -7,6 +7,7 @@ export interface Tournament {
   modality: string;
   startDate: string;
   endDate: string;
+  registrationEndDate?: string | null;
   status: string;
   capacity: number;
   sportId: number;
@@ -14,6 +15,7 @@ export interface Tournament {
 
 export type TournamentStatus =
   | 'DRAFT'
+  | 'OPEN'
   | 'PUBLISHED'
   | 'IN_PROGRESS'
   | 'FINISHED'
