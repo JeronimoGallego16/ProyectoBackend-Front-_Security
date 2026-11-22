@@ -45,6 +45,43 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'skills',
+        loadComponent: () =>
+          import('./pages/business/skills/skills.component').then(
+            (m) => m.SkillsComponent
+          ),
+      },
+      {
+        path: 'players/:id/skills',
+        loadComponent: () =>
+          import('./pages/business/player-skills/player-skills.component').then(
+            (m) => m.PlayerSkillsComponent
+          ),
+      },
+      {
+        path: 'players/:id/teams',
+        data: { context: 'player' },
+        loadComponent: () =>
+          import('./pages/business/player-teams/player-teams.component').then(
+            (m) => m.PlayerTeamsComponent
+          ),
+      },
+      {
+        path: 'players',
+        loadComponent: () =>
+          import('./pages/business/players/players.component').then(
+            (m) => m.PlayersComponent
+          ),
+      },
+      {
+        path: 'teams/:id/players',
+        data: { context: 'team' },
+        loadComponent: () =>
+          import('./pages/business/player-teams/player-teams.component').then(
+            (m) => m.PlayerTeamsComponent
+          ),
+      },
+      {
         path: 'teams',
         loadComponent: () =>
           import('./pages/business/teams/teams.component').then(
@@ -56,6 +93,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/business/matches/matches.component').then(
             (m) => m.MatchesComponent
+          ),
+      },
+      {
+        path: 'matches/:id/annotations',
+        loadComponent: () =>
+          import('./pages/business/annotations/annotations.component').then(
+            (m) => m.AnnotationsComponent
           ),
       },
       {

@@ -47,6 +47,16 @@ export const navItems: NavItem[] = [
     iconName: 'solar:football-line-duotone',
     route: '/sports',
   },
+   {
+     displayName: 'Skills',
+     iconName: 'solar:star-line-duotone',
+     route: '/skills',
+   },
+   {
+     displayName: 'Players',
+     iconName: 'solar:user-line-duotone',
+     route: '/players',
+   },
   {
     displayName: 'Teams',
     iconName: 'solar:users-group-rounded-line-duotone',

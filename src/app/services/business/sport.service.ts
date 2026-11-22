@@ -15,7 +15,7 @@ import { Sport } from '../../models/business/sport.model';
   providedIn: 'root',
 })
 export class SportService {
-  private readonly baseUrl: string = `${environment.bussinesApiUrl}/sports`;
+  private readonly baseUrl: string = `${environment.bussinesApiUrl}/api/sports`;
 
   /**
    * Creates the sport data-access service.

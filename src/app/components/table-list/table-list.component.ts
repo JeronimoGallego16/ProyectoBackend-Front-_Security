@@ -36,6 +36,9 @@ export class DataTableComponent {
   @Input() deleteDisabled = false;
   @Input() showActions = true;
   @Input() actions: TableAction[] = [];
+  @Input() viewActionVisible?: (row: object) => boolean;
+  @Input() editActionVisible?: (row: object) => boolean;
+  @Input() deleteActionVisible?: (row: object) => boolean;
   @Output() view = new EventEmitter<any>();
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();

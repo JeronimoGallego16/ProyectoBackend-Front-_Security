@@ -1,0 +1,53 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Skills</h1>
+    <button mat-flat-button color="primary" (click)="onCreateClick()">
+      <mat-icon>add</mat-icon>
+      New Skill
+    </button>
+  </div>
+
+  @if (showForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="skillForm"
+        [fields]="fields"
+        [isEditing]="isEditing"
+        [isLoading]="isLoading"
+        (submitted)="onSubmit()"
+        (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-data-table
+      [data]="skills"
+      [columns]="columns"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+    ></app-data-table>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    title="Delete skill"
+    [message]="pendingDeleteSkill ? 'Are you sure you want to delete skill #' + pendingDeleteSkill.skillId + ' - ' + pendingDeleteSkill.name + '?' : 'Are you sure?'"
+    [isLoading]="isLoading"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Skill details"
+    [data]="selectedSkill"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
+</div>

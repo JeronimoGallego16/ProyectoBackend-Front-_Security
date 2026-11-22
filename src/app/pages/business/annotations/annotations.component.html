@@ -1,0 +1,75 @@
+<div class="p-6">
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <a routerLink="/matches" class="text-sm text-blue-700 underline">Back to matches</a>
+      <h1 class="text-2xl font-bold text-gray-800">Match annotations</h1>
+      @if (match) {
+        <p class="text-sm text-gray-600">
+          Match #{{ match.matchId }} · Teams {{ match.homeTeamId }} and {{ match.awayTeamId }}
+        </p>
+        @if (!matchIsActive) {
+          <p class="mt-1 text-sm text-amber-700">
+            Annotation creation is available only while the match is ACTIVE.
+          </p>
+        }
+      }
+    </div>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="isLoading || !matchIsActive || eligiblePlayers.length === 0"
+      (click)="onCreateClick()"
+    >
+      <mat-icon>add</mat-icon>
+      New Annotation
+    </button>
+  </div>
+
+  @if (showForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="annotationForm"
+        [fields]="formFields"
+        [isEditing]="isEditing"
+        [isLoading]="isLoading"
+        (submitted)="onSubmit()"
+        (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-data-table
+      [data]="annotationRows"
+      [columns]="columns"
+      [viewActionVisible]="canViewAnnotation"
+      [editActionVisible]="canModifyAnnotation"
+      [deleteActionVisible]="canModifyAnnotation"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+    ></app-data-table>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmVoidOpen"
+    title="Void annotation"
+    [message]="pendingVoidAnnotation ? 'Void the annotation at minute ' + pendingVoidAnnotation.minute + '? It will remain visible in the match record.' : 'Are you sure?'"
+    [isLoading]="isLoading"
+    (confirm)="onConfirmVoid()"
+    (cancel)="onCancelVoid()"
+  ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Annotation details"
+    [data]="selectedAnnotation"
+    [fields]="detailFields"
+    (close)="onCloseDetail()"
+  ></app-detail-dialog>
+</div>

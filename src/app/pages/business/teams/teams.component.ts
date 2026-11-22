@@ -15,8 +15,10 @@ import {
 } from 'src/app/components/dynamic-form/dynamic-form.component';
 import {
   DataTableComponent,
+  TableAction,
   TableColumn,
 } from 'src/app/components/table-list/table-list.component';
+import { Router } from '@angular/router';
 import { CreateTeamDTO, UpdateTeamDTO } from 'src/app/models/dtos/business/team-request.dto';
 import { FeedbackCase } from 'src/app/models/feedback-case';
 import { Team } from 'src/app/models/business/team.model';
@@ -50,6 +52,10 @@ export class TeamsComponent implements OnInit {
     { field: 'teamId', header: 'ID' },
     { field: 'name', header: 'Name' },
     { field: 'category', header: 'Category' },
+  ];
+
+  public readonly actions: TableAction[] = [
+    { label: 'Manage roster', icon: 'groups', color: 'primary' },
   ];
 
   /**
@@ -103,7 +109,8 @@ export class TeamsComponent implements OnInit {
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly teamService: TeamService,
-    private readonly feedbackHandlerService: FeedbackHandlerService
+    private readonly feedbackHandlerService: FeedbackHandlerService,
+    private readonly router: Router
   ) {
     this.teamForm = this.formBuilder.group({
       name: [
@@ -185,6 +192,12 @@ export class TeamsComponent implements OnInit {
   public onView(team: Team): void {
     this.selectedTeam = team;
     this.detailOpen = true;
+  }
+
+  public onCustomAction(event: { action: string; row: Team }): void {
+    if (event.action === 'Manage roster') {
+      this.router.navigate(['/teams', event.row.teamId, 'players']);
+    }
   }
 
   /**

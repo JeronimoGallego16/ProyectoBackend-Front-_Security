@@ -1,0 +1,55 @@
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">Players</h1>
+    <button mat-flat-button color="primary" (click)="onCreateClick()">
+      <mat-icon>add</mat-icon>
+      New Player
+    </button>
+  </div>
+
+  @if (showForm) {
+    <div class="mb-6">
+      <app-dynamic-form
+        [form]="playerForm"
+        [fields]="formFields"
+        [isEditing]="isEditing"
+        [isLoading]="isLoading"
+        (submitted)="onSubmit()"
+        (cancelled)="cancelForm()"
+      ></app-dynamic-form>
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <app-data-table
+      [data]="playerRows"
+      [columns]="columns"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+    ></app-data-table>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    title="Delete player"
+    [message]="pendingDeletePlayer ? 'Are you sure you want to delete player #' + pendingDeletePlayer.playerId + ' - ' + pendingDeletePlayer.name + ' ' + pendingDeletePlayer.lastName + '?' : 'Are you sure?'"
+    [isLoading]="isLoading"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-dialog>
+
+  <app-detail-dialog
+    [open]="detailOpen"
+    title="Player profile"
+    [data]="selectedPlayerProfile"
+    [fields]="detailFields"
+    [actions]="detailActions"
+    (close)="onCloseDetail()"
+    (action)="onProfileAction($event)"
+  ></app-detail-dialog>
+</div>

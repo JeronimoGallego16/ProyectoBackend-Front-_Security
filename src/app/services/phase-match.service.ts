@@ -11,7 +11,7 @@ import { PhaseMatch } from '../models/phase-match.model';
   providedIn: 'root',
 })
 export class PhaseMatchService {
-  private readonly baseUrl: string = `${environment.bussinesApiUrl}/matches`;
+  private readonly baseUrl: string = `${environment.bussinesApiUrl}/api/matches`;
 
   constructor(private readonly http: HttpClient) {}
 

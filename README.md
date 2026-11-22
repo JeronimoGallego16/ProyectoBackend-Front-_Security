@@ -147,3 +147,5 @@ La solución está organizada como una aplicación distribuida en microservicios
 Al agregar un nuevo servicio, se actualizará este README con su responsabilidad,
 tecnologías, requisitos, configuración, dependencias e instrucciones de
 ejecución.
+
+.\iniciar-servicios.bat

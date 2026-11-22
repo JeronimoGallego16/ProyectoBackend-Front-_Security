@@ -18,6 +18,7 @@ import {
   TableColumn,
   TableAction,
 } from 'src/app/components/table-list/table-list.component';
+import { Router } from '@angular/router';
 import {
   CreateMatchDTO,
   UpdateMatchDTO,
@@ -156,6 +157,11 @@ export class MatchesComponent implements OnInit {
       icon: 'sports_score',
       color: 'primary',
     },
+    {
+      label: 'Annotations',
+      icon: 'edit_note',
+      color: 'primary',
+    },
   ];
 
   /**
@@ -204,7 +210,8 @@ export class MatchesComponent implements OnInit {
     private readonly teamSportService: TeamSportService,
     private readonly tournamentService: TournamentService,
     private readonly phaseService: PhaseService,
-    private readonly feedbackHandlerService: FeedbackHandlerService
+    private readonly feedbackHandlerService: FeedbackHandlerService,
+    private readonly router: Router
   ) {
     this.matchForm = this.formBuilder.group({
       duration: [
@@ -433,6 +440,15 @@ export class MatchesComponent implements OnInit {
   }
 
   public onCustomAction(event: { action: string; row: Match }): void {
+    if (event.action === 'Annotations') {
+      this.router.navigate([
+        '/matches',
+        event.row.matchId,
+        'annotations',
+      ]);
+      return;
+    }
+
     if (event.action !== 'Register result') {
       return;
     }

@@ -33,21 +33,27 @@
           @if (showActions) {
             <td class="px-4 py-3">
             <div class="flex gap-1">
-              <button mat-icon-button color="primary" matTooltip="Ver" (click)="view.emit(item)">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button mat-icon-button color="accent" matTooltip="Editar" (click)="edit.emit(item)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                color="warn"
-                [matTooltip]="deleteDisabled ? 'Pendiente de integración con backend' : 'Eliminar'"
-                [disabled]="deleteDisabled"
-                (click)="delete.emit(item)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
+              @if (!viewActionVisible || viewActionVisible(item)) {
+                <button mat-icon-button color="primary" matTooltip="Ver" (click)="view.emit(item)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              }
+              @if (!editActionVisible || editActionVisible(item)) {
+                <button mat-icon-button color="accent" matTooltip="Editar" (click)="edit.emit(item)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (!deleteActionVisible || deleteActionVisible(item)) {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  [matTooltip]="deleteDisabled ? 'Pendiente de integración con backend' : 'Eliminar'"
+                  [disabled]="deleteDisabled"
+                  (click)="delete.emit(item)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
               @for (action of actions; track action.label) {
                 @if (!action.visible || action.visible(item)) {
                   <button

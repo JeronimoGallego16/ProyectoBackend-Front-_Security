@@ -16,7 +16,7 @@ import { Match } from '../../models/business/match.model';
   providedIn: 'root',
 })
 export class MatchService {
-  private readonly baseUrl: string = `${environment.bussinesApiUrl}/matches`;
+  private readonly baseUrl: string = `${environment.bussinesApiUrl}/api/matches`;
 
   /**
    * Creates the match data-access service.

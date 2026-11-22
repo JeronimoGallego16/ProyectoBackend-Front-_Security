@@ -15,7 +15,7 @@ import { Team } from '../../models/business/team.model';
   providedIn: 'root',
 })
 export class TeamService {
-  private readonly baseUrl: string = `${environment.bussinesApiUrl}/teams`;
+  private readonly baseUrl: string = `${environment.bussinesApiUrl}/api/teams`;
 
   /**
    * Creates the team data-access service.

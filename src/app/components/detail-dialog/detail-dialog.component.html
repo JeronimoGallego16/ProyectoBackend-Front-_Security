@@ -23,6 +23,17 @@
     </div>
 
     <div class="flex justify-end gap-2 border-t border-gray-200 px-4 py-3">
+      @for (action of actions; track action.label) {
+        <button
+          mat-stroked-button
+          type="button"
+          [color]="action.color ?? 'primary'"
+          (click)="emitAction(action.label)"
+        >
+          <mat-icon>{{ action.icon }}</mat-icon>
+          {{ action.label }}
+        </button>
+      }
       <button mat-stroked-button type="button" (click)="onClose()">Close</button>
     </div>
   </div>

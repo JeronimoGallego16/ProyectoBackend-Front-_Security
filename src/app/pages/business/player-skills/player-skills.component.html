@@ -1,0 +1,67 @@
+<div class="p-6">
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <a routerLink="/players" class="text-sm text-blue-700 underline">Back to players</a>
+      <h1 class="text-2xl font-bold text-gray-800">Player skills</h1>
+      @if (player) {
+        <p class="text-sm text-gray-600">{{ player.name }} {{ player.lastName }}</p>
+      }
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="flex justify-center py-6">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <section class="mb-6 rounded-lg border p-4">
+      <h2 class="mb-3 font-semibold text-gray-800">Available skills</h2>
+      @if (skills.length > 0) {
+        <app-assignment-table
+          [columns]="selectionColumns"
+          [rows]="selectionRows"
+          [disabled]="isLoading"
+          (selectionChange)="onSkillSelection($event)"
+        ></app-assignment-table>
+      } @else {
+        <p class="text-sm text-gray-500">No skills are available.</p>
+      }
+    </section>
+
+    @if (showForm) {
+      <div class="mb-6">
+        <h2 class="mb-2 font-semibold text-gray-800">
+          {{ isEditing ? 'Edit skill assignment' : 'Assign selected skill' }}
+        </h2>
+        <app-dynamic-form
+          [form]="playerSkillForm"
+          [fields]="fields"
+          [isEditing]="isEditing"
+          [isLoading]="isLoading"
+          (submitted)="onSubmit()"
+          (cancelled)="cancelForm()"
+        ></app-dynamic-form>
+      </div>
+    }
+
+    <section class="rounded-lg border p-4">
+      <h2 class="mb-3 font-semibold text-gray-800">Assigned skills</h2>
+      <app-data-table
+        [data]="assignments"
+        [columns]="assignmentColumns"
+        [viewActionVisible]="hideViewAction"
+        (edit)="onEdit($event)"
+        (delete)="requestRemoval($event)"
+      ></app-data-table>
+    </section>
+  }
+
+  <app-confirm-dialog
+    [open]="confirmDeleteOpen"
+    [isLoading]="isLoading"
+    title="Remove player skill"
+    [message]="pendingDeleteAssignment ? 'Remove ' + pendingDeleteAssignment.skillName + ' from this player?' : 'Are you sure?'"
+    (confirm)="confirmRemoval()"
+    (cancel)="cancelRemoval()"
+  ></app-confirm-dialog>
+</div>

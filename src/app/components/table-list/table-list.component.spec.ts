@@ -20,4 +20,13 @@ describe('DataTableComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('hides row actions when their visibility predicate rejects the row', () => {
+    component.data = [{ voided: true }];
+    component.editActionVisible = (row) => !('voided' in row && row.voided);
+    component.deleteActionVisible = component.editActionVisible;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('button').length).toBe(1);
+  });
 });
