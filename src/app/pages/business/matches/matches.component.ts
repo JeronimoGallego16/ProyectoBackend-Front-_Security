@@ -87,9 +87,20 @@ export class MatchesComponent implements OnInit {
     {
       name: 'state',
       label: 'State',
-      type: 'text',
-      placeholder: 'Match state',
-      hint: 'Required; maximum 50 characters.',
+      type: 'select',
+      hint: 'Required; select a match state.',
+      options: [
+        { value: 'ACTIVE', label: 'ACTIVE' },
+        { value: 'INACTIVE', label: 'INACTIVE' },
+        { value: 'PROGRAMMED', label: 'PROGRAMMED' },
+        { value: 'FINISHED', label: 'FINISHED' },
+      ],
+    },
+    {
+      name: 'phaseId',
+      label: 'Phase',
+      type: 'select',
+      options: [],
     },
     {
       name: 'homeTeamId',
@@ -103,12 +114,6 @@ export class MatchesComponent implements OnInit {
       label: 'Away team',
       type: 'select',
       hint: 'Teams must be assigned to the sport of the selected phase.',
-      options: [],
-    },
-    {
-      name: 'phaseId',
-      label: 'Phase',
-      type: 'select',
       options: [],
     },
     {
@@ -337,10 +342,13 @@ export class MatchesComponent implements OnInit {
   private setPhaseOptions(phases: Phase[]): void {
     this.phasesById.clear();
     phases.forEach((phase) => this.phasesById.set(phase.phaseId, phase));
-    this.fields[4].options = phases.map((phase) => ({
-      value: phase.phaseId,
-      label: `${phase.name} (#${phase.phaseId}, tournament #${phase.tournamentId})`,
-    }));
+    const phaseField = this.fields.find((field) => field.name === 'phaseId');
+    if (phaseField) {
+      phaseField.options = phases.map((phase) => ({
+        value: phase.phaseId,
+        label: `${phase.name} (#${phase.phaseId}, tournament #${phase.tournamentId})`,
+      }));
+    }
     this.updateEligibleTeamOptions(this.matchForm.get('phaseId')?.value);
   }
 

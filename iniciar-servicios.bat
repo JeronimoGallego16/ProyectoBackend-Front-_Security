@@ -9,14 +9,15 @@ setlocal
 
 set "PROJECT_ROOT=%~dp0.."
 set "FRONTEND_DIR=%~dp0"
-set "SECURITY_DIR=%PROJECT_ROOT%\ms_security-main"
-set "NOTIFICATIONS_DIR=%PROJECT_ROOT%\ms_notificaciones\Backend_ms_notificaciones"
+set "SECURITY_DIR=%PROJECT_ROOT%\backEndProyecto1"
+set "NOTIFICATIONS_DIR=%PROJECT_ROOT%\Backend_ms_notificaciones"
+set "BUSINESS_DIR=%PROJECT_ROOT%\Backend_Negocio"
 set "NOTIFICATION_SERVICE_TOKEN_FILE=%NOTIFICATIONS_DIR%\.notification-service-token"
 set "SERVICE_TOKEN="
 set "NOTIFICATION_SERVICE_TOKEN="
 set "FIREBASE_ENABLED=true"
 set "FIREBASE_PROJECT_ID=oauthbackend-28668"
-set "FIREBASE_CREDENTIALS_PATH=%SECURITY_DIR%\firebase-credentials.json"
+set "FIREBASE_CREDENTIALS_PATH=%PROJECT_ROOT%\firebase-credentials.json"
 set "FIREBASE_CHECK_REVOKED=true"
 
 if not exist "%SECURITY_DIR%\mvnw.cmd" (
@@ -27,6 +28,12 @@ if not exist "%SECURITY_DIR%\mvnw.cmd" (
 
 if not exist "%NOTIFICATIONS_DIR%\main.py" (
     echo No se encontro el microservicio de notificaciones en "%NOTIFICATIONS_DIR%".
+    pause
+    exit /b 1
+)
+
+if not exist "%BUSINESS_DIR%\package.json" (
+    echo No se encontro el backend de negocio en "%BUSINESS_DIR%".
     pause
     exit /b 1
 )
@@ -51,46 +58,24 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "PYTHON_EXE=%NOTIFICATIONS_DIR%\.venv\Scripts\python.exe"
-if not exist "%PYTHON_EXE%" (
-    set "PYTHON_LAUNCHER="
-    py -3.13 --version >nul 2>&1
-    if not errorlevel 1 set "PYTHON_LAUNCHER=py -3.13"
-    if not defined PYTHON_LAUNCHER (
-        py -3.12 --version >nul 2>&1
-        if not errorlevel 1 set "PYTHON_LAUNCHER=py -3.12"
-    )
-    if not defined PYTHON_LAUNCHER (
-        where python >nul 2>&1
-        if not errorlevel 1 set "PYTHON_LAUNCHER=python"
-    )
-    if not defined PYTHON_LAUNCHER (
-        echo No se encontro Python. Instala Python 3.12 o 3.13.
-        pause
-        exit /b 1
-    )
-
-    echo Creando el entorno virtual del microservicio...
-    %PYTHON_LAUNCHER% -m venv "%NOTIFICATIONS_DIR%\.venv"
-    if errorlevel 1 (
-        echo No se pudo crear el entorno virtual.
-        pause
-        exit /b 1
-    )
-
-    echo Instalando las dependencias del microservicio...
-    "%PYTHON_EXE%" -m pip install -r "%NOTIFICATIONS_DIR%\requirements.txt"
-    if errorlevel 1 (
-        echo No se pudieron instalar las dependencias.
-        pause
-        exit /b 1
-    )
+where py >nul 2>&1
+if errorlevel 1 (
+    echo No se encontro el launcher de Python py en PATH.
+    pause
+    exit /b 1
 )
 
-"%PYTHON_EXE%" -c "import fastapi, googleapiclient, google_auth_oauthlib, uvicorn" >nul 2>&1
+py -3.13 --version >nul 2>&1
 if errorlevel 1 (
-    echo Faltan dependencias de Python para el microservicio.
-    echo Ejecuta: "%PYTHON_EXE%" -m pip install -r "%NOTIFICATIONS_DIR%\requirements.txt"
+    echo Python 3.13 no esta instalado. Instala Python 3.13 o ajusta el comando del BAT.
+    pause
+    exit /b 1
+)
+
+py -3.13 -c "import fastapi, googleapiclient, google_auth_oauthlib, uvicorn" >nul 2>&1
+if errorlevel 1 (
+    echo Faltan dependencias de Python 3.13 para el microservicio.
+    echo Ejecuta: py -3.13 -m pip install -r "%NOTIFICATIONS_DIR%\requirements.txt"
     pause
     exit /b 1
 )
@@ -111,17 +96,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ports = @(8000, 8181); foreach ($port in $ports) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { Write-Output ('Puerto ocupado: ' + $port); exit 1 } }"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ports = @(3000, 8000, 8181); foreach ($port in $ports) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { Write-Output ('Puerto ocupado: ' + $port); exit 1 } }"
 if errorlevel 1 (
-    echo Deten los servicios que ya esten usando los puertos 8000 o 8181 y vuelve a ejecutar este BAT.
+    echo Deten los servicios que ya esten usando los puertos 3000, 8000 o 8181 y vuelve a ejecutar este BAT.
     pause
     exit /b 1
 )
 
-echo Iniciando los tres servicios en ventanas independientes...
+echo Iniciando los cuatro servicios en ventanas independientes...
 
 echo Iniciando primero el microservicio de notificaciones...
-start "Microservicio de notificaciones - FastAPI" /D "%NOTIFICATIONS_DIR%" cmd /k ""%PYTHON_EXE%" -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
+start "Microservicio de notificaciones - FastAPI" /D "%NOTIFICATIONS_DIR%" cmd /k "py -3.13 -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
 
 echo Esperando a que FastAPI cree el secreto compartido y responda...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ready = $false; for ($i = 0; $i -lt 30; $i++) { try { $null = Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health' -TimeoutSec 2; $ready = $true; break } catch { Start-Sleep -Seconds 1 } }; if (-not $ready) { exit 1 }"
@@ -132,13 +117,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo FastAPI esta listo. Iniciando backend de seguridad y frontend...
+echo FastAPI esta listo. Iniciando backends de seguridad y negocio, y frontend...
 start "Backend de seguridad - Spring Boot" /D "%SECURITY_DIR%" cmd /k "call mvnw.cmd spring-boot:run"
+start "Backend de negocio - NestJS" /D "%BUSINESS_DIR%" cmd /k "npm run start:dev"
 start "Frontend - Angular" /D "%FRONTEND_DIR%" cmd /k "npm start"
 
 echo.
 echo Frontend:             http://localhost:4200
 echo Backend de seguridad: http://localhost:8181
+echo Backend de negocio:   http://localhost:3000
 echo Notificaciones:       http://localhost:8000
 echo.
 echo Cierra cada ventana de servicio para detenerlo.
