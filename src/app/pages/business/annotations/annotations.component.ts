@@ -221,11 +221,11 @@ export class AnnotationsComponent implements OnInit {
           this.annotations = annotations;
           const eligibleIds = new Set(
             [...homeTeam, ...awayTeam].map(
-              (assignment: PlayerTeam) => assignment.playerId
+              (assignment: PlayerTeam) => Number(assignment.playerId)
             )
           );
           this.eligiblePlayers = players.filter((player) =>
-            eligibleIds.has(player.playerId)
+            eligibleIds.has(Number(player.playerId))
           );
           const playerField = this.annotationFormFields.find(
             (field) => field.name === 'playerId'
