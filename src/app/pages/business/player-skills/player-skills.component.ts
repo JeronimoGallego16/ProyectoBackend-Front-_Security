@@ -108,9 +108,9 @@ export class PlayerSkillsComponent implements OnInit {
         id: skill.skillId,
         values: [skill.skillId, skill.name],
         status: assigned ? 'Assigned' : 'Available',
-        selectable: !assigned,
-        selected: this.selectedSkillId === skill.skillId,
-        actionHint: assigned ? 'Already assigned' : 'Select to assign',
+        actionLabel: assigned ? undefined : 'Assign',
+        actionIcon: assigned ? undefined : 'add',
+        actionHint: assigned ? 'Already assigned' : undefined,
         muted: assigned,
       };
     });

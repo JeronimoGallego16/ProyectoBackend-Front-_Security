@@ -31,6 +31,8 @@ export interface FormFieldConfig {
   placeholder?: string;
   hint?: string;
   options?: FormFieldOption[];
+  min?: Date;
+  max?: Date;
 }
 
 /**

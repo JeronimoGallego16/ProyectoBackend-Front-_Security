@@ -14,6 +14,14 @@
     } @else if (context === 'team' && team) {
       <p class="text-sm text-gray-600">{{ team.name }} · Team #{{ team.teamId }}</p>
     }
+    <app-confirm-dialog
+      [open]="pendingScheduledDeletion !== null"
+      [isLoading]="isSaving"
+      title="Delete scheduled assignment"
+      message="Permanently delete this scheduled assignment? Earlier team assignments will keep their existing end dates."
+      (confirm)="deleteScheduledAssignment()"
+      (cancel)="pendingScheduledDeletion = null"
+    ></app-confirm-dialog>
   </div>
 
   @if (isLoading) {

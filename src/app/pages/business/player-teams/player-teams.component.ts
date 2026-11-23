@@ -13,6 +13,7 @@ import {
   AssignmentTableRow,
   AssignmentTableColumn,
 } from 'src/app/components/assignment-table/assignment-table.component';
+import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import {
   DataTableComponent,
   TableAction,
@@ -62,6 +63,7 @@ interface PlayerTeamRow extends PlayerTeam {
     AssignmentTableComponent,
     DataTableComponent,
     DynamicFormComponent,
+    ConfirmDialogComponent,
   ],
   templateUrl: './player-teams.component.html',
 })
@@ -84,7 +86,13 @@ export class PlayerTeamsComponent implements OnInit {
       label: 'Retire',
       icon: 'person_remove',
       color: 'warn',
-      visible: (row) => row.endDate === null,
+      visible: (row) => this.isCurrentAssignment(row),
+    },
+    {
+      label: 'Delete scheduled assignment',
+      icon: 'delete',
+      color: 'warn',
+      visible: (row) => this.isScheduledAssignment(row),
     },
   ];
 
@@ -105,14 +113,23 @@ export class PlayerTeamsComponent implements OnInit {
     },
   ];
 
-  public readonly retirementFields: FormFieldConfig[] = [
-    {
-      name: 'endDate',
-      label: 'End date',
-      type: 'date',
-      placeholder: 'End date',
-    },
-  ];
+  public get retirementFields(): FormFieldConfig[] {
+    return [
+      {
+        name: 'endDate',
+        label: 'End date',
+        type: 'date',
+        placeholder: 'End date',
+        min: this.pendingRetirement
+          ? this.toDateValue(this.pendingRetirement.startDate)
+          : undefined,
+        max:
+          this.pendingRetirement?.endDate
+            ? this.toDateValue(this.pendingRetirement.endDate)
+            : undefined,
+      },
+    ];
+  }
 
   public context: PlayerTeamContext = 'player';
   public player: Player | null = null;
@@ -121,6 +138,7 @@ export class PlayerTeamsComponent implements OnInit {
   public assignments: PlayerTeam[] = [];
   public selectedPlayerId: number | null = null;
   public pendingRetirement: PlayerTeam | null = null;
+  public pendingScheduledDeletion: PlayerTeam | null = null;
   public assignmentForm: FormGroup;
   public retirementForm: FormGroup;
   public isLoading = false;
@@ -139,14 +157,18 @@ export class PlayerTeamsComponent implements OnInit {
         this.context === 'player' ? assignment.teamName : assignment.playerName,
       startDateDisplay: assignment.startDate.slice(0, 10),
       endDateDisplay: assignment.endDate?.slice(0, 10) ?? 'Open',
-      status: assignment.endDate === null ? 'Current' : 'History',
+      status: this.isCurrentAssignment(assignment)
+        ? 'Current'
+        : this.isScheduledAssignment(assignment)
+          ? 'Scheduled'
+          : 'History',
     }));
   }
 
   public get selectablePlayerRows(): AssignmentTableRow[] {
     const currentPlayerIds = new Set(
       this.assignments
-        .filter((assignment) => assignment.endDate === null)
+        .filter((assignment) => this.isCurrentAssignment(assignment))
         .map((assignment) => assignment.playerId)
     );
     return this.players
@@ -252,7 +274,7 @@ export class PlayerTeamsComponent implements OnInit {
     const assignment = this.assignments.find(
       (item) => item.playerTeamId === Number(id)
     );
-    if (!assignment || assignment.endDate !== null) {
+    if (!assignment || !this.isCurrentAssignment(assignment)) {
       return;
     }
     this.pendingRetirement = assignment;
@@ -266,7 +288,37 @@ export class PlayerTeamsComponent implements OnInit {
   }): void {
     if (event.action === 'Retire') {
       this.onAssignmentAction(event.row.playerTeamId);
+    } else if (
+      event.action === 'Delete scheduled assignment' &&
+      this.isScheduledAssignment(event.row)
+    ) {
+      this.pendingScheduledDeletion = event.row;
     }
+  }
+
+  public deleteScheduledAssignment(): void {
+    if (!this.pendingScheduledDeletion || this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+    this.playerTeamService
+      .deleteScheduled(this.pendingScheduledDeletion.playerTeamId)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: () => {
+          this.feedbackHandlerService.success(
+            FeedbackCase.NO_CONTENT,
+            'Scheduled assignment deleted successfully.'
+          );
+          this.pendingScheduledDeletion = null;
+          this.loadData();
+        },
+        error: (error: ApiError) =>
+          this.feedbackHandlerService.error(
+            String(error.status ?? FeedbackCase.SERVER_ERROR),
+            this.getErrorMessage(error, 'Could not delete the scheduled assignment.')
+          ),
+      });
   }
 
   public assignSelectedPlayer(): void {
@@ -339,9 +391,13 @@ export class PlayerTeamsComponent implements OnInit {
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
         next: () => {
+          const retirementIsFuture =
+            payload.endDate > new Date().toISOString().slice(0, 10);
           this.feedbackHandlerService.success(
             FeedbackCase.OK,
-            'Player retired from the team.'
+            retirementIsFuture
+              ? `Retirement date updated to ${payload.endDate}. The player remains on the team until then.`
+              : 'Player retired from the team.'
           );
           this.cancelRetirement();
           this.loadData();
@@ -376,6 +432,24 @@ export class PlayerTeamsComponent implements OnInit {
     const month = String(value.getMonth() + 1).padStart(2, '0');
     const day = String(value.getDate()).padStart(2, '0');
     return `${value.getFullYear()}-${month}-${day}`;
+  }
+
+  private toDateValue(value: string): Date {
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  private isCurrentAssignment(
+    assignment: Pick<PlayerTeam, 'startDate' | 'endDate'>,
+  ): boolean {
+    const today = new Date().toISOString().slice(0, 10);
+    const startDate = assignment.startDate.slice(0, 10);
+    const endDate = assignment.endDate?.slice(0, 10) ?? null;
+    return startDate <= today && (endDate === null || endDate > today);
+  }
+
+  private isScheduledAssignment(assignment: Pick<PlayerTeam, 'startDate'>): boolean {
+    return assignment.startDate.slice(0, 10) > new Date().toISOString().slice(0, 10);
   }
 
   private getErrorMessage(error: ApiError, fallback: string): string {

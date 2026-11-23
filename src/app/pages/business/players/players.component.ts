@@ -19,6 +19,7 @@ import {
 } from 'src/app/components/dynamic-form/dynamic-form.component';
 import {
   DataTableComponent,
+  TableAction,
   TableColumn,
 } from 'src/app/components/table-list/table-list.component';
 import { CreatePlayerDTO, UpdatePlayerDTO } from 'src/app/models/dtos/business/player-request.dto';
@@ -59,6 +60,10 @@ export class PlayersComponent implements OnInit {
     { field: 'email', header: 'Email' },
     { field: 'gender', header: 'Gender' },
     { field: 'active', header: 'Active' },
+  ];
+
+  public readonly playerActions: TableAction[] = [
+    { label: 'Manage skills', icon: 'workspace_premium', color: 'primary' },
   ];
 
   public readonly fields: FormFieldConfig[] = [
@@ -242,6 +247,12 @@ export class PlayersComponent implements OnInit {
     }
     this.onCloseDetail();
     this.router.navigate(route);
+  }
+
+  public onPlayerAction(event: { action: string; row: Player }): void {
+    if (event.action === 'Manage skills') {
+      this.router.navigate(['/players', event.row.playerId, 'skills']);
+    }
   }
 
   public onCloseDetail(): void {

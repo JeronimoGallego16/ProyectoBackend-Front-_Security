@@ -21,7 +21,7 @@
           [columns]="selectionColumns"
           [rows]="selectionRows"
           [disabled]="isLoading"
-          (selectionChange)="onSkillSelection($event)"
+          (action)="onSkillSelection($event)"
         ></app-assignment-table>
       } @else {
         <p class="text-sm text-gray-500">No skills are available.</p>

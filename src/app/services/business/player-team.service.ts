@@ -53,4 +53,8 @@ export class PlayerTeamService {
       retirement
     );
   }
+
+  public deleteScheduled(playerTeamId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/player-teams/${playerTeamId}`);
+  }
 }
