@@ -30,6 +30,7 @@ export class HeaderComponent implements OnInit {
   @Output() toggleMobileNav = new EventEmitter<void>();
   isLoggingOut = false;
   public profileImageUrl: string | null = null;
+  private currentUserId: number | null = null;
 
   constructor(
     private readonly authService: AuthService,
@@ -39,11 +40,22 @@ export class HeaderComponent implements OnInit {
   ) {}
 
   public ngOnInit(): void {
-    this.profileService.profileChanges$.subscribe((profile) => this.setProfileImage(profile));
+    this.profileService.profileChanges$.subscribe((profile) => {
+      if (profile?.userId === this.currentUserId) {
+        this.setProfileImage(profile);
+      }
+    });
     this.authService.getSession().pipe(
       catchError(() => of(null))
     ).subscribe((session) => {
-      if (!session) return;
+      if (!session) {
+        this.currentUserId = null;
+        this.setProfileImage(null);
+        return;
+      }
+
+      this.currentUserId = session.id;
+      this.setProfileImage(null);
       this.profileService.findByUserId(session.id).pipe(
         catchError(() => of(null))
       ).subscribe((profile) => this.setProfileImage(profile));
