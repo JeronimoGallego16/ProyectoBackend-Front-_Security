@@ -128,6 +128,7 @@ export class AuthService {
   }
 
   public logout(): Observable<void> {
+    this.csrfService.clearToken();
     return this.http
       .post<void>(`${this.authUrl}/logout`, null, { withCredentials: true })
       .pipe(tap(() => this.clearLocalState()));
