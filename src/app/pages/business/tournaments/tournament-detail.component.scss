@@ -1,3 +1,133 @@
 :host {
   display: block;
 }
+
+.bracket-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+}
+
+.bracket-board {
+  min-width: 276px;
+  position: relative;
+}
+
+.bracket-connectors {
+  height: calc(100% - 3.25rem);
+  inset: 3.25rem 0 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 0;
+
+  path {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 0.8;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .third-place-connector {
+    stroke: #b45309;
+    stroke-dasharray: 2 2;
+  }
+}
+
+.bracket-round {
+  bottom: 0;
+  padding: 0 0.5rem;
+  position: absolute;
+  top: 0;
+  width: 276px;
+  z-index: 1;
+}
+
+.bracket-round-title {
+  display: flex;
+  flex-direction: column;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+  height: 3.25rem;
+  overflow: hidden;
+  padding: 0.75rem 0.25rem;
+  white-space: nowrap;
+
+  h3,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 500;
+  }
+}
+
+.bracket-match-area {
+  bottom: 0;
+  left: 0.5rem;
+  position: absolute;
+  right: 0.5rem;
+  top: 3.25rem;
+}
+
+.bracket-match {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 10%);
+  height: 5rem;
+  left: 1rem;
+  overflow: hidden;
+  position: absolute;
+  right: 1rem;
+  transform: translateY(-50%);
+}
+
+.bracket-team {
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  font-size: 0.8rem;
+  height: 1.45rem;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 0 0.5rem;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.bracket-winner {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+}
+
+.bracket-match-footer {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 0.65rem;
+  height: 1.55rem;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+.bracket-tie {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.bracket-empty {
+  color: #64748b;
+  font-size: 0.8rem;
+  padding: 1rem 0.5rem;
+}

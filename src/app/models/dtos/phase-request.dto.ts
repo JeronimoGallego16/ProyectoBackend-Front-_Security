@@ -7,6 +7,7 @@ export interface CreateFinalPhaseDTO {
   tournamentId: number;
   type: 'FINAL';
   isThirdPlace: boolean;
+  expectedMatchCount: number;
 }
 
 /**
@@ -16,4 +17,5 @@ export interface UpdateFinalPhaseDTO {
   name?: string;
   order?: number;
   isThirdPlace?: boolean;
+  expectedMatchCount?: number;
 }

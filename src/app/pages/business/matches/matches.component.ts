@@ -37,6 +37,13 @@ import { TeamSportService } from 'src/app/services/business/team-sport.service';
 import { TeamService } from 'src/app/services/business/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 
+interface PreviousRoundQualifiers {
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+  sourcePositions: [number, number] | null;
+  outcome: 'winner' | 'loser';
+}
+
 /**
  * Presentation page that coordinates match CRUD actions and shared UI components.
  */
@@ -103,6 +110,18 @@ export class MatchesComponent implements OnInit {
       options: [],
     },
     {
+      name: 'bracketPosition',
+      label: 'Bracket position',
+      type: 'text',
+      placeholder: 'Positive position in this round',
+      hint: 'Required for final-round matches; the position determines the previous-round qualifiers.',
+    },
+    {
+      name: 'isThirdPlace',
+      label: 'Third-place match',
+      type: 'checkbox',
+    },
+    {
       name: 'homeTeamId',
       label: 'Home team',
       type: 'select',
@@ -121,23 +140,6 @@ export class MatchesComponent implements OnInit {
       label: 'Round name',
       type: 'text',
       placeholder: 'Semifinal, final, etc.',
-    },
-    {
-      name: 'bracketPosition',
-      label: 'Bracket position',
-      type: 'text',
-      placeholder: 'Optional numeric position',
-    },
-    {
-      name: 'nextMatchId',
-      label: 'Next match ID',
-      type: 'text',
-      placeholder: 'Optional next match',
-    },
-    {
-      name: 'isThirdPlace',
-      label: 'Third-place match',
-      type: 'checkbox',
     },
   ];
 
@@ -235,6 +237,18 @@ export class MatchesComponent implements OnInit {
           Validators.maxLength(50),
         ],
       ],
+      phaseId: [
+        '',
+        Validators.required,
+      ],
+      bracketPosition: [
+        '',
+        [
+          Validators.pattern(/^([1-9]\d*)$/),
+          Validators.max(Number.MAX_SAFE_INTEGER),
+        ],
+      ],
+      isThirdPlace: [false],
       homeTeamId: [
         '',
         Validators.required,
@@ -243,26 +257,7 @@ export class MatchesComponent implements OnInit {
         '',
         Validators.required,
       ],
-      phaseId: [
-        '',
-        Validators.required,
-      ],
       roundName: [''],
-      bracketPosition: [
-        '',
-        [
-          Validators.pattern(/^([1-9]\d*)$/),
-          Validators.max(Number.MAX_SAFE_INTEGER),
-        ],
-      ],
-      nextMatchId: [
-        '',
-        [
-          Validators.pattern(/^([1-9]\d*)$/),
-          Validators.max(Number.MAX_SAFE_INTEGER),
-        ],
-      ],
-      isThirdPlace: [false],
     });
     this.resultForm = this.formBuilder.group({
       homeScore: [
@@ -284,6 +279,12 @@ export class MatchesComponent implements OnInit {
     });
     this.matchForm.get('phaseId')?.valueChanges.subscribe((phaseId) => {
       this.updateEligibleTeamOptions(phaseId);
+    });
+    this.matchForm.get('bracketPosition')?.valueChanges.subscribe(() => {
+      this.updateEligibleTeamOptions(this.matchForm.get('phaseId')?.value);
+    });
+    this.matchForm.get('isThirdPlace')?.valueChanges.subscribe(() => {
+      this.updateEligibleTeamOptions(this.matchForm.get('phaseId')?.value);
     });
     this.matchForm.valueChanges.subscribe(() => {
       this.submissionError = null;
@@ -352,8 +353,12 @@ export class MatchesComponent implements OnInit {
     this.updateEligibleTeamOptions(this.matchForm.get('phaseId')?.value);
   }
 
-  private updateEligibleTeamOptions(phaseId: number | string | null): void {
+  private updateEligibleTeamOptions(
+    phaseId: number | string | null | undefined
+  ): void {
     const phase = this.phasesById.get(Number(phaseId));
+    const allowsPendingTeams = phase?.type.toUpperCase() === 'FINAL';
+    const isThirdPlace = Boolean(this.matchForm.get('isThirdPlace')?.value);
     const tournament = phase
       ? this.tournamentsById.get(phase.tournamentId)
       : undefined;
@@ -367,30 +372,206 @@ export class MatchesComponent implements OnInit {
             )
           )
         : [];
-    const eligibleTeamIds = new Set(
-      eligibleTeams.map((team) => team.teamId)
+    const previousRoundQualifiers = this.getPreviousRoundQualifiers(
+      phase,
+      this.matchForm.get('bracketPosition')?.value,
+      isThirdPlace
     );
 
-    for (const fieldName of ['homeTeamId', 'awayTeamId']) {
+    for (const [fieldName, qualifierKey, sideIndex] of [
+      ['homeTeamId', 'homeTeamId', 0],
+      ['awayTeamId', 'awayTeamId', 1],
+    ] as const) {
+      const qualifiedTeamId = previousRoundQualifiers
+        ? previousRoundQualifiers[qualifierKey]
+        : null;
+      const fieldTeams =
+        previousRoundQualifiers === null
+          ? eligibleTeams
+          : qualifiedTeamId === null
+            ? []
+            : eligibleTeams.filter((team) => team.teamId === qualifiedTeamId);
       const field = this.fields.find((item) => item.name === fieldName);
       if (field) {
-        field.options = eligibleTeams.map((team) => ({
+        field.hint = this.getTeamSelectionHint(
+          allowsPendingTeams,
+          previousRoundQualifiers,
+          sideIndex,
+          fieldTeams[0]?.name
+        );
+        field.options = fieldTeams.map((team) => ({
           value: team.teamId,
           label: `${team.name} (#${team.teamId})`,
         }));
       }
 
       const control = this.matchForm.get(fieldName);
+      if (control) {
+        control.setValidators(
+          allowsPendingTeams ? [] : [Validators.required]
+        );
+        control.updateValueAndValidity({ emitEvent: false });
+      }
       const currentTeamId = Number(control?.value);
       if (
         control &&
         control.value !== '' &&
         control.value !== null &&
-        !eligibleTeamIds.has(currentTeamId)
+        !fieldTeams.some((team) => team.teamId === currentTeamId)
       ) {
         control.setValue('', { emitEvent: false });
       }
     }
+
+    const bracketPositionControl = this.matchForm.get('bracketPosition');
+    const bracketPositionField = this.fields.find(
+      (field) => field.name === 'bracketPosition'
+    );
+    if (bracketPositionControl) {
+      bracketPositionControl.setValidators(
+        allowsPendingTeams
+          ? [
+              Validators.required,
+              Validators.pattern(/^([1-9]\d*)$/),
+              Validators.max(Number.MAX_SAFE_INTEGER),
+            ]
+          : [
+              Validators.pattern(/^([1-9]\d*)$/),
+              Validators.max(Number.MAX_SAFE_INTEGER),
+            ]
+      );
+      bracketPositionControl.updateValueAndValidity({ emitEvent: false });
+    }
+    if (bracketPositionField) {
+      bracketPositionField.hint = allowsPendingTeams
+        ? 'Required; the position determines which previous-round winners may be assigned.'
+        : 'Optional for matches outside final rounds.';
+    }
+  }
+
+  private getPreviousRoundQualifiers(
+    phase: Phase | undefined,
+    bracketPositionValue: number | string | null,
+    isThirdPlace: boolean
+  ): PreviousRoundQualifiers | null {
+    if (!phase || phase.type.toUpperCase() !== 'FINAL') {
+      return null;
+    }
+
+    const previousFinalPhase = [...this.phasesById.values()]
+      .filter(
+        (candidate) =>
+          candidate.tournamentId === phase.tournamentId &&
+          candidate.type.toUpperCase() === 'FINAL' &&
+          candidate.order < phase.order
+      )
+      .sort((left, right) => right.order - left.order)[0];
+
+    if (!previousFinalPhase) {
+      return isThirdPlace
+        ? {
+            homeTeamId: null,
+            awayTeamId: null,
+            sourcePositions: null,
+            outcome: 'loser',
+          }
+        : null;
+    }
+
+    const outcome = isThirdPlace ? 'loser' : 'winner';
+    if (
+      isThirdPlace &&
+      (!phase.isThirdPlace || previousFinalPhase.expectedMatchCount !== 2)
+    ) {
+      return {
+        homeTeamId: null,
+        awayTeamId: null,
+        sourcePositions: null,
+        outcome,
+      };
+    }
+
+    const position = Number(bracketPositionValue);
+    if (!isThirdPlace && (!Number.isInteger(position) || position < 1)) {
+      return {
+        homeTeamId: null,
+        awayTeamId: null,
+        sourcePositions: null,
+        outcome,
+      };
+    }
+
+    const sourcePositions: [number, number] = isThirdPlace
+      ? [1, 2]
+      : [position * 2 - 1, position * 2];
+    return {
+      homeTeamId: this.getQualifierTeamId(
+        previousFinalPhase.phaseId,
+        sourcePositions[0],
+        outcome
+      ),
+      awayTeamId: this.getQualifierTeamId(
+        previousFinalPhase.phaseId,
+        sourcePositions[1],
+        outcome
+      ),
+      sourcePositions,
+      outcome,
+    };
+  }
+
+  private getQualifierTeamId(
+    phaseId: number,
+    bracketPosition: number,
+    outcome: 'winner' | 'loser'
+  ): number | null {
+    const sourceMatch = this.matches.find(
+      (match) =>
+        match.phaseId === phaseId &&
+        match.bracketPosition === bracketPosition &&
+        !match.isThirdPlace
+    );
+    if (
+      !sourceMatch ||
+      sourceMatch.state.trim().toUpperCase() !== 'FINISHED' ||
+      !sourceMatch.resultRegistered ||
+      sourceMatch.homeTeamId === null ||
+      sourceMatch.awayTeamId === null ||
+      sourceMatch.homeScore == null ||
+      sourceMatch.awayScore == null ||
+      sourceMatch.homeScore === sourceMatch.awayScore
+    ) {
+      return null;
+    }
+
+    const homeWon = sourceMatch.homeScore > sourceMatch.awayScore;
+    if (outcome === 'winner') {
+      return homeWon ? sourceMatch.homeTeamId : sourceMatch.awayTeamId;
+    }
+    return homeWon ? sourceMatch.awayTeamId : sourceMatch.homeTeamId;
+  }
+
+  private getTeamSelectionHint(
+    allowsPendingTeams: boolean,
+    qualifiers: PreviousRoundQualifiers | null,
+    sideIndex: 0 | 1,
+    availableTeamName: string | undefined
+  ): string {
+    if (!allowsPendingTeams) {
+      return 'Required; teams must be assigned to the sport of the selected phase.';
+    }
+    if (!qualifiers) {
+      return 'Optional in the first final round; an empty selection is shown as TBD.';
+    }
+    if (!qualifiers.sourcePositions) {
+      return qualifiers.outcome === 'loser'
+        ? 'Third place requires two semifinal matches in the previous round.'
+        : 'Choose the bracket position first to see the eligible qualifier.';
+    }
+    if (availableTeamName) {
+      return `Only ${availableTeamName} qualified from previous-round match ${qualifiers.sourcePositions[sideIndex]}.`;
+    }
+    return `No ${qualifiers.outcome} is available yet from previous-round match ${qualifiers.sourcePositions[sideIndex]}.`;
   }
 
   /**
@@ -402,7 +583,12 @@ export class MatchesComponent implements OnInit {
       .findAll()
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (matches: Match[]) => (this.matches = matches),
+        next: (matches: Match[]) => {
+          this.matches = matches;
+          this.updateEligibleTeamOptions(
+            this.matchForm.get('phaseId')?.value
+          );
+        },
         error: (error: { status?: number }) =>
           this.feedbackHandlerService.error(
             String(error?.status ?? FeedbackCase.SERVER_ERROR),
@@ -441,7 +627,6 @@ export class MatchesComponent implements OnInit {
       roundName: match.roundName ?? '',
       bracketPosition:
         match.bracketPosition == null ? '' : String(match.bracketPosition),
-      nextMatchId: match.nextMatchId == null ? '' : String(match.nextMatchId),
       isThirdPlace: match.isThirdPlace ?? false,
     });
     this.showForm = true;
@@ -458,6 +643,13 @@ export class MatchesComponent implements OnInit {
     }
 
     if (event.action !== 'Register result') {
+      return;
+    }
+    if (event.row.homeTeamId === null || event.row.awayTeamId === null) {
+      this.feedbackHandlerService.warning(
+        FeedbackCase.BAD_REQUEST,
+        'Assign both teams before registering a result.'
+      );
       return;
     }
 
@@ -491,9 +683,17 @@ export class MatchesComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
+          const phase = this.phasesById.get(
+            this.pendingResultMatch?.phaseId ?? 0
+          );
+          const isFinalTie =
+            phase?.type.toUpperCase() === 'FINAL' &&
+            Number(value.homeScore) === Number(value.awayScore);
           this.feedbackHandlerService.success(
             FeedbackCase.OK,
-            'Final score registered; the match is now FINISHED.'
+            isFinalTie
+              ? 'The match was recorded as tied. No team advanced; a decisive result is needed before the bracket can continue.'
+                : 'Final score registered; the match is FINISHED. Assign its qualifier manually in the next round.'
           );
           this.cancelResultForm();
           this.loadMatches();
@@ -612,42 +812,116 @@ export class MatchesComponent implements OnInit {
     }
 
     const formValue = this.getFormValue();
-    if (Number(formValue.homeTeamId) === Number(formValue.awayTeamId)) {
+    const phase = this.phasesById.get(Number(formValue.phaseId));
+    const homeTeamId = formValue.homeTeamId
+      ? Number(formValue.homeTeamId)
+      : null;
+    const awayTeamId = formValue.awayTeamId
+      ? Number(formValue.awayTeamId)
+      : null;
+    if (homeTeamId !== null && homeTeamId === awayTeamId) {
       this.submissionError = 'Home and away teams must be different.';
       return;
     }
 
+    if (!phase) {
+      this.submissionError = 'Select a valid tournament phase.';
+      return;
+    }
+    const isFinalPhase = phase.type.toUpperCase() === 'FINAL';
+    if (!isFinalPhase && (homeTeamId === null || awayTeamId === null)) {
+      this.submissionError =
+        'Both teams are required for a match outside a final phase.';
+      return;
+    }
+    if (isFinalPhase && !formValue.bracketPosition) {
+      this.submissionError =
+        'A bracket position is required for every final-round match.';
+      return;
+    }
+    if (isFinalPhase) {
+      const position = Number(formValue.bracketPosition);
+      const isThirdPlace = formValue.isThirdPlace;
+      if (phase.expectedMatchCount == null) {
+        this.submissionError =
+          'Set the expected number of main matches on this final phase before creating its matches.';
+        return;
+      }
+      if (
+        (isThirdPlace &&
+          (!phase.isThirdPlace || position !== 1)) ||
+        (!isThirdPlace && position > phase.expectedMatchCount)
+      ) {
+        this.submissionError =
+          'The bracket position or third-place setting does not match the final phase configuration.';
+        return;
+      }
+      if (isThirdPlace) {
+        const previousFinal = [...this.phasesById.values()]
+          .filter(
+            (candidate) =>
+              candidate.tournamentId === phase.tournamentId &&
+              candidate.type.toUpperCase() === 'FINAL' &&
+              candidate.order < phase.order
+          )
+          .sort((left, right) => right.order - left.order)[0];
+        if (previousFinal?.expectedMatchCount !== 2) {
+          this.submissionError =
+            'A third-place match requires a previous final phase with exactly two main matches.';
+          return;
+        }
+      }
+      const existingPhaseMatches = this.matches.filter(
+        (match) =>
+          match.phaseId === phase.phaseId &&
+          match.matchId !== this.editingMatchId
+      );
+      if (
+        existingPhaseMatches.some(
+          (match) =>
+            match.bracketPosition === position &&
+            Boolean(match.isThirdPlace) === isThirdPlace
+        )
+      ) {
+        this.submissionError =
+          'A match already exists at that bracket position in this phase.';
+        return;
+      }
+      const totalMatches =
+        phase.expectedMatchCount + (phase.isThirdPlace ? 1 : 0);
+      if (existingPhaseMatches.length >= totalMatches) {
+        this.submissionError =
+          'This phase already contains its configured number of matches.';
+        return;
+      }
+    }
     if (
       formValue.state.trim().toUpperCase() === 'FINISHED' &&
       (!this.originalMatch ||
         this.originalMatch.homeScore == null ||
-        this.originalMatch.awayScore == null)
+        this.originalMatch.awayScore == null ||
+        homeTeamId === null ||
+        awayTeamId === null)
     ) {
       this.submissionError =
         'Use Register result to enter both scores and finish the match.';
       return;
     }
 
-    const phase = this.phasesById.get(Number(formValue.phaseId));
     const tournament = phase
       ? this.tournamentsById.get(phase.tournamentId)
       : undefined;
     const eligibleTeamIds = new Set(
-      tournament
-        ? this.teamSports
-            .filter(
-              (assignment) => assignment.sportId === tournament.sportId
-            )
-            .map((assignment) => assignment.teamId)
-        : []
+      this.teamSports
+        .filter((assignment) => assignment.sportId === tournament?.sportId)
+        .map((assignment) => assignment.teamId)
     );
     if (
-      !phase ||
-      !eligibleTeamIds.has(Number(formValue.homeTeamId)) ||
-      !eligibleTeamIds.has(Number(formValue.awayTeamId))
+      (homeTeamId !== null && !eligibleTeamIds.has(homeTeamId)) ||
+      (awayTeamId !== null && !eligibleTeamIds.has(awayTeamId))
     ) {
       this.submissionError =
-        'Both teams must be assigned to the sport of the selected phase. Manage the assignments in Assign Sports, then select the teams again.';
+        'Each assigned team must belong to the sport of the selected phase. Manage assignments in Assign Sports.';
       return;
     }
 
@@ -719,6 +993,9 @@ export class MatchesComponent implements OnInit {
     if (responseMessage) {
       return responseMessage;
     }
+    if (responseMessage) {
+      return responseMessage;
+    }
     if (error.status === 404) {
       return 'The selected team or phase was not found. Verify the selected records and try again.';
     }
@@ -744,7 +1021,6 @@ export class MatchesComponent implements OnInit {
     phaseId: string;
     roundName: string;
     bracketPosition: string;
-    nextMatchId: string;
     isThirdPlace: boolean;
   } {
     return {
@@ -755,7 +1031,6 @@ export class MatchesComponent implements OnInit {
       phaseId: '',
       roundName: '',
       bracketPosition: '',
-      nextMatchId: '',
       isThirdPlace: false,
     };
   }
@@ -773,7 +1048,6 @@ export class MatchesComponent implements OnInit {
     phaseId: string;
     roundName: string;
     bracketPosition: string;
-    nextMatchId: string;
     isThirdPlace: boolean;
   } {
     return this.matchForm.getRawValue() as {
@@ -784,7 +1058,6 @@ export class MatchesComponent implements OnInit {
       phaseId: string;
       roundName: string;
       bracketPosition: string;
-      nextMatchId: string;
       isThirdPlace: boolean;
     };
   }
@@ -801,17 +1074,18 @@ export class MatchesComponent implements OnInit {
     return {
       duration: formValue.duration.trim(),
       state: formValue.state.trim(),
-      homeTeamId: Number(formValue.homeTeamId),
-      awayTeamId: Number(formValue.awayTeamId),
+      ...(formValue.homeTeamId
+        ? { homeTeamId: Number(formValue.homeTeamId) }
+        : {}),
+      ...(formValue.awayTeamId
+        ? { awayTeamId: Number(formValue.awayTeamId) }
+        : {}),
       phaseId: Number(formValue.phaseId),
       ...(formValue.roundName.trim()
         ? { roundName: formValue.roundName.trim() }
         : {}),
       ...(formValue.bracketPosition
         ? { bracketPosition: Number(formValue.bracketPosition) }
-        : {}),
-      ...(formValue.nextMatchId
-        ? { nextMatchId: Number(formValue.nextMatchId) }
         : {}),
       isThirdPlace: formValue.isThirdPlace,
     };
@@ -830,15 +1104,16 @@ export class MatchesComponent implements OnInit {
     const payload: UpdateMatchDTO = {};
     const duration = formValue.duration.trim();
     const state = formValue.state.trim();
-    const homeTeamId = Number(formValue.homeTeamId);
-    const awayTeamId = Number(formValue.awayTeamId);
+    const homeTeamId = formValue.homeTeamId
+      ? Number(formValue.homeTeamId)
+      : null;
+    const awayTeamId = formValue.awayTeamId
+      ? Number(formValue.awayTeamId)
+      : null;
     const phaseId = Number(formValue.phaseId);
     const roundName = formValue.roundName.trim();
     const bracketPosition = formValue.bracketPosition
       ? Number(formValue.bracketPosition)
-      : null;
-    const nextMatchId = formValue.nextMatchId
-      ? Number(formValue.nextMatchId)
       : null;
 
     if (originalMatch && duration !== originalMatch.duration) {
@@ -847,10 +1122,16 @@ export class MatchesComponent implements OnInit {
     if (originalMatch && state !== originalMatch.state) {
       payload.state = state;
     }
-    if (originalMatch && homeTeamId !== originalMatch.homeTeamId) {
+    if (
+      originalMatch &&
+      homeTeamId !== (originalMatch.homeTeamId ?? null)
+    ) {
       payload.homeTeamId = homeTeamId;
     }
-    if (originalMatch && awayTeamId !== originalMatch.awayTeamId) {
+    if (
+      originalMatch &&
+      awayTeamId !== (originalMatch.awayTeamId ?? null)
+    ) {
       payload.awayTeamId = awayTeamId;
     }
     if (originalMatch && phaseId !== originalMatch.phaseId) {
@@ -867,12 +1148,6 @@ export class MatchesComponent implements OnInit {
       bracketPosition !== (originalMatch.bracketPosition ?? null)
     ) {
       payload.bracketPosition = bracketPosition;
-    }
-    if (
-      originalMatch &&
-      nextMatchId !== (originalMatch.nextMatchId ?? null)
-    ) {
-      payload.nextMatchId = nextMatchId;
     }
     if (
       originalMatch &&

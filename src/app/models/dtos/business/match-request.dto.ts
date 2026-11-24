@@ -4,8 +4,8 @@
 export interface CreateMatchDTO {
   duration: string;
   state: string;
-  homeTeamId: number;
-  awayTeamId: number;
+  homeTeamId?: number | null;
+  awayTeamId?: number | null;
   phaseId: number;
   homeScore?: number | null;
   awayScore?: number | null;
@@ -21,8 +21,8 @@ export interface CreateMatchDTO {
 export interface UpdateMatchDTO {
   duration?: string;
   state?: string;
-  homeTeamId?: number;
-  awayTeamId?: number;
+  homeTeamId?: number | null;
+  awayTeamId?: number | null;
   phaseId?: number;
   homeScore?: number | null;
   awayScore?: number | null;

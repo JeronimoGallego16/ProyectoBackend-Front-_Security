@@ -7,7 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin, finalize, map, switchMap } from 'rxjs';
+import { EMPTY, forkJoin, finalize, map, switchMap } from 'rxjs';
 import { ConfirmDialogComponent } from 'src/app/components/confirm-dialog/confirm-dialog.component';
 import { DetailDialogComponent } from 'src/app/components/detail-dialog/detail-dialog.component';
 import {
@@ -201,8 +201,15 @@ export class AnnotationsComponent implements OnInit {
     this.matchService
       .findById(this.matchId)
       .pipe(
-        switchMap((match) =>
-          forkJoin({
+        switchMap((match) => {
+          if (match.homeTeamId === null || match.awayTeamId === null) {
+            this.feedbackHandlerService.warning(
+              FeedbackCase.BAD_REQUEST,
+              'Annotations are unavailable until both teams are assigned to the match.'
+            );
+            return EMPTY;
+          }
+          return forkJoin({
             players: this.playerService.findAll(),
             homeTeam: this.playerTeamService.findByTeam(
               match.homeTeamId,
@@ -221,8 +228,8 @@ export class AnnotationsComponent implements OnInit {
               awayTeam,
               annotations,
             }))
-          )
-        ),
+          );
+        }),
         finalize(() => (this.isLoading = false))
       )
       .subscribe({

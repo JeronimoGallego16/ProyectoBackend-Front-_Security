@@ -6,10 +6,10 @@ export interface PhaseMatch {
   duration: string;
   state: string;
   phaseId: number;
-  homeTeamId: number;
-  awayTeamId: number;
-  homeTeamName?: string;
-  awayTeamName?: string;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
   homeScore?: number | null;
   awayScore?: number | null;
   roundName?: string | null;

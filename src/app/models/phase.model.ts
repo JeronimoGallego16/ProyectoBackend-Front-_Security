@@ -8,4 +8,5 @@ export interface Phase {
   tournamentId: number;
   type: string;
   isThirdPlace: boolean;
+  expectedMatchCount?: number | null;
 }
