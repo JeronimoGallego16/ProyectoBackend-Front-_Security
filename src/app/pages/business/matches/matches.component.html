@@ -61,7 +61,7 @@
   <app-confirm-dialog
     [open]="confirmDeleteOpen"
     title="Delete match"
-    [message]="pendingDeleteMatch ? 'Are you sure you want to delete match #' + pendingDeleteMatch.matchId + '?' : 'Are you sure?'"
+    [message]="pendingDeleteMatch ? 'Permanently delete match #' + pendingDeleteMatch.matchId + ' and all associated annotations, including voided ones?' : 'Are you sure?'"
     [isLoading]="isLoading"
     (confirm)="onConfirmDelete()"
     (cancel)="onCancelDelete()"

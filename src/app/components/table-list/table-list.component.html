@@ -47,7 +47,7 @@
                 <button
                   mat-icon-button
                   color="warn"
-                  [matTooltip]="deleteDisabled ? 'Pendiente de integración con backend' : 'Eliminar'"
+                  [matTooltip]="deleteDisabled ? 'Pendiente de integración con backend' : deleteActionTooltip"
                   [disabled]="deleteDisabled"
                   (click)="delete.emit(item)"
                 >

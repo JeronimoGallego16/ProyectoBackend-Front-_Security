@@ -36,6 +36,12 @@ interface ApiError {
   error?: { message?: string };
 }
 
+interface BracketConnector {
+  key: string;
+  path: string;
+  isThirdPlace: boolean;
+}
+
 /**
  * Presents a tournament and manages its final phases.
  */
@@ -60,6 +66,7 @@ export class TournamentDetailComponent implements OnInit {
     { field: 'name', header: 'Name' },
     { field: 'order', header: 'Order' },
     { field: 'type', header: 'Type' },
+    { field: 'expectedMatchCount', header: 'Main bracket matches' },
     { field: 'isThirdPlace', header: 'Third-place match' },
   ];
 
@@ -90,6 +97,13 @@ export class TournamentDetailComponent implements OnInit {
       placeholder: 'Positive phase order',
     },
     {
+      name: 'expectedMatchCount',
+      label: 'Main bracket matches',
+      type: 'text',
+      placeholder: 'Positive number of matches',
+      hint: 'Use a power of two (1, 2, 4, 8, ...). Excludes third place; later rounds halve the count.',
+    },
+    {
       name: 'isThirdPlace',
       label: 'Includes third-place match',
       type: 'checkbox',
@@ -102,6 +116,7 @@ export class TournamentDetailComponent implements OnInit {
     { key: 'order', label: 'Order' },
     { key: 'tournamentId', label: 'Tournament ID' },
     { key: 'type', label: 'Type' },
+    { key: 'expectedMatchCount', label: 'Main bracket matches' },
     { key: 'isThirdPlace', label: 'Third-place match' },
   ];
 
@@ -133,6 +148,14 @@ export class TournamentDetailComponent implements OnInit {
     this.phaseForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.pattern(/\S/)]],
       order: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^[1-9]\d*$/),
+          Validators.max(Number.MAX_SAFE_INTEGER),
+        ],
+      ],
+      expectedMatchCount: [
         '',
         [
           Validators.required,
@@ -181,6 +204,7 @@ export class TournamentDetailComponent implements OnInit {
             tournamentId: phase.tournamentId ?? development.tournament.tournamentId,
             type: phase.type,
             isThirdPlace: phase.isThirdPlace,
+            expectedMatchCount: phase.expectedMatchCount,
           }));
           this.finalPhases = this.phases.filter((phase) => phase.type === 'FINAL');
           this.matches = this.developmentPhases.flatMap((phase) =>
@@ -204,7 +228,23 @@ export class TournamentDetailComponent implements OnInit {
     this.isEditingPhase = false;
     this.editingPhaseId = null;
     this.originalPhase = null;
-    this.phaseForm.reset({ name: '', order: '', isThirdPlace: false });
+    const nextOrder =
+      Math.max(0, ...this.phases.map((phase) => phase.order)) + 1;
+    const orderedFinals = [...this.finalPhases].sort(
+      (left, right) => left.order - right.order
+    );
+    const previousFinal = orderedFinals[orderedFinals.length - 1];
+    const expectedMatchCount =
+      previousFinal?.expectedMatchCount != null &&
+      previousFinal.expectedMatchCount % 2 === 0
+        ? String(previousFinal.expectedMatchCount / 2)
+        : '';
+    this.phaseForm.reset({
+      name: '',
+      order: String(nextOrder),
+      expectedMatchCount,
+      isThirdPlace: false,
+    });
     this.showPhaseForm = true;
   }
 
@@ -215,6 +255,10 @@ export class TournamentDetailComponent implements OnInit {
     this.phaseForm.reset({
       name: phase.name,
       order: String(phase.order),
+      expectedMatchCount:
+        phase.expectedMatchCount == null
+          ? ''
+          : String(phase.expectedMatchCount),
       isThirdPlace: phase.isThirdPlace,
     });
     this.showPhaseForm = true;
@@ -286,8 +330,17 @@ export class TournamentDetailComponent implements OnInit {
     const value = this.phaseForm.getRawValue() as {
       name: string;
       order: string;
+      expectedMatchCount: string;
       isThirdPlace: boolean;
     };
+    const expectedMatchCount = Number(value.expectedMatchCount);
+    if (!Number.isInteger(Math.log2(expectedMatchCount))) {
+      this.feedbackHandlerService.warning(
+        FeedbackCase.BAD_REQUEST,
+        'Main bracket matches must be a power of two so later rounds can halve down to one final match.'
+      );
+      return;
+    }
     const wasEditing = this.isEditingPhase;
     let request$;
 
@@ -303,6 +356,7 @@ export class TournamentDetailComponent implements OnInit {
       const payload: CreateFinalPhaseDTO = {
         name: value.name.trim(),
         order: Number(value.order),
+        expectedMatchCount,
         tournamentId: this.tournamentId,
         type: 'FINAL',
         isThirdPlace: value.isThirdPlace,
@@ -336,11 +390,125 @@ export class TournamentDetailComponent implements OnInit {
     this.isEditingPhase = false;
     this.editingPhaseId = null;
     this.originalPhase = null;
-    this.phaseForm.reset({ name: '', order: '', isThirdPlace: false });
+    this.phaseForm.reset({
+      name: '',
+      order: '',
+      expectedMatchCount: '',
+      isThirdPlace: false,
+    });
   }
 
   public matchesForPhase(phaseId: number): DevelopmentMatch[] {
     return this.matches.filter((match) => match.phaseId === phaseId);
+  }
+
+  public get finalRounds(): DevelopmentPhase[] {
+    return this.developmentPhases
+      .filter((phase) => phase.type === 'FINAL')
+      .sort((left, right) => left.order - right.order);
+  }
+
+  public get bracketHeight(): number {
+    const largestRound = Math.max(
+      1,
+      ...this.finalRounds.map((phase) => this.roundMatches(phase).length)
+    );
+    return Math.max(300, largestRound * 132 + 54);
+  }
+
+  public get hasBracketMatches(): boolean {
+    return this.finalRounds.some((phase) => this.roundMatches(phase).length > 0);
+  }
+
+  public roundMatches(phase: DevelopmentPhase): DevelopmentMatch[] {
+    return [...(phase.bracket.length ? phase.bracket : phase.matches)].sort(
+      (left, right) =>
+        (left.bracketPosition ?? Number.MAX_SAFE_INTEGER) -
+          (right.bracketPosition ?? Number.MAX_SAFE_INTEGER) ||
+        left.matchId - right.matchId
+    );
+  }
+
+  public mainMatchCount(phase: DevelopmentPhase): number {
+    return this.roundMatches(phase).filter((match) => !match.isThirdPlace)
+      .length;
+  }
+
+  public matchPositionPercent(
+    phase: DevelopmentPhase,
+    match: DevelopmentMatch
+  ): number {
+    const matches = this.roundMatches(phase);
+    const index = matches.findIndex((candidate) => candidate.matchId === match.matchId);
+    return ((Math.max(0, index) + 0.5) / Math.max(1, matches.length)) * 100;
+  }
+
+  public get bracketConnectors(): BracketConnector[] {
+    const rounds = this.finalRounds;
+    const connectors: BracketConnector[] = [];
+
+    for (let roundIndex = 0; roundIndex < rounds.length - 1; roundIndex++) {
+      const currentRound = rounds[roundIndex];
+      const nextRound = rounds[roundIndex + 1];
+      const currentMatches = this.roundMatches(currentRound);
+      const nextMatches = this.roundMatches(nextRound);
+      const thirdPlaceMatch = nextMatches.find((match) => match.isThirdPlace);
+
+      for (const [matchIndex, match] of currentMatches
+        .filter((candidate) => !candidate.isThirdPlace)
+        .entries()) {
+        const position = match.bracketPosition ?? matchIndex + 1;
+        const expectedPosition = Math.ceil(position / 2);
+        const winnerTarget = nextMatches.find(
+          (candidate) =>
+            !candidate.isThirdPlace &&
+            candidate.bracketPosition === expectedPosition
+        );
+        if (winnerTarget) {
+          connectors.push(
+            this.createBracketConnector(
+              `${match.matchId}-${winnerTarget.matchId}-winner`,
+              roundIndex,
+              this.matchPositionPercent(currentRound, match),
+              this.matchPositionPercent(nextRound, winnerTarget),
+              false
+            )
+          );
+        }
+
+        if (
+          thirdPlaceMatch &&
+          currentMatches.length === 2 &&
+          (position === 1 || position === 2)
+        ) {
+          connectors.push(
+            this.createBracketConnector(
+              `${match.matchId}-${thirdPlaceMatch.matchId}-loser`,
+              roundIndex,
+              this.matchPositionPercent(currentRound, match),
+              this.matchPositionPercent(nextRound, thirdPlaceMatch),
+              true
+            )
+          );
+        }
+      }
+    }
+
+    return connectors;
+  }
+
+  public winnerTeamId(match: DevelopmentMatch): number | null {
+    if (
+      match.state.trim().toUpperCase() !== 'FINISHED' ||
+      match.homeScore == null ||
+      match.awayScore == null ||
+      match.homeScore === match.awayScore
+    ) {
+      return null;
+    }
+    return match.homeScore > match.awayScore
+      ? match.homeTeamId ?? null
+      : match.awayTeamId ?? null;
   }
 
   private normalizeDevelopmentMatch(
@@ -352,21 +520,42 @@ export class TournamentDetailComponent implements OnInit {
       match.homeScore !== undefined &&
       match.awayScore !== null &&
       match.awayScore !== undefined;
+    const homeTeamId = match.homeTeamId ?? match.homeTeam?.teamId ?? null;
+    const awayTeamId = match.awayTeamId ?? match.awayTeam?.teamId ?? null;
 
     return {
       ...match,
       phaseId: match.phaseId ?? phaseId,
-      homeTeamId: match.homeTeamId ?? match.homeTeam?.teamId,
+      homeTeamId,
       homeTeamName: match.homeTeamName ?? match.homeTeam?.name,
-      awayTeamId: match.awayTeamId ?? match.awayTeam?.teamId,
+      awayTeamId,
       awayTeamName: match.awayTeamName ?? match.awayTeam?.name,
-      resultRegistered: match.resultRegistered && hasScores,
+      resultRegistered:
+        match.resultRegistered && hasScores && homeTeamId !== null && awayTeamId !== null,
+    };
+  }
+
+  private createBracketConnector(
+    key: string,
+    roundIndex: number,
+    sourceY: number,
+    targetY: number,
+    isThirdPlace: boolean
+  ): BracketConnector {
+    const sourceX = roundIndex * 100 + 92;
+    const targetX = (roundIndex + 1) * 100 + 8;
+    const middleX = (sourceX + targetX) / 2;
+    return {
+      key,
+      path: `M ${sourceX} ${sourceY} H ${middleX} V ${targetY} H ${targetX}`,
+      isThirdPlace,
     };
   }
 
   private buildUpdatePayload(value: {
     name: string;
     order: string;
+    expectedMatchCount: string;
     isThirdPlace: boolean;
   }): UpdateFinalPhaseDTO {
     const payload: UpdateFinalPhaseDTO = {};
@@ -378,6 +567,13 @@ export class TournamentDetailComponent implements OnInit {
       Number(value.order) !== this.originalPhase.order
     ) {
       payload.order = Number(value.order);
+    }
+    if (
+      this.originalPhase &&
+      Number(value.expectedMatchCount) !==
+        (this.originalPhase.expectedMatchCount ?? null)
+    ) {
+      payload.expectedMatchCount = Number(value.expectedMatchCount);
     }
     if (
       this.originalPhase &&

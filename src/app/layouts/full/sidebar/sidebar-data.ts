@@ -46,40 +46,48 @@ export const navItems: NavItem[] = [
     displayName: 'Sports',
     iconName: 'solar:football-line-duotone',
     route: '/sports',
+    requiredRole: 'ADMIN',
   },
    {
      displayName: 'Skills',
      iconName: 'solar:star-line-duotone',
      route: '/skills',
+     requiredRole: 'ADMIN',
    },
    {
      displayName: 'Players',
      iconName: 'solar:user-line-duotone',
      route: '/players',
+     requiredRole: 'ADMIN',
    },
   {
     displayName: 'Teams',
     iconName: 'solar:users-group-rounded-line-duotone',
     route: '/teams',
+    requiredRole: 'ADMIN',
   },
   {
     displayName: 'Matches',
     iconName: 'solar:calendar-mark-line-duotone',
     route: '/matches',
+    requiredRole: 'ADMIN',
   },
   {
     displayName: 'Tournaments',
     iconName: 'solar:cup-star-line-duotone',
     route: '/tournaments',
+    requiredRole: 'ADMIN',
   },
   {
     displayName: 'Assign Sports',
     iconName: 'solar:football-line-duotone',
     route: '/team-sports',
+    requiredRole: 'ADMIN',
   },
   {
     displayName: 'Registrations',
     iconName: 'solar:clipboard-list-line-duotone',
     route: '/registrations',
+    requiredRole: 'ADMIN',
   },
 ];

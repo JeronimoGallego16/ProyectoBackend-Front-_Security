@@ -62,42 +62,106 @@
       </mat-card-content>
     </mat-card>
 
+    @if (finalRounds.length) {
+      <mat-card class="mb-6">
+        <mat-card-header>
+          <mat-card-title>Knockout bracket</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="pt-4">
+          @if (hasBracketMatches) {
+            <div class="bracket-scroll">
+              <div
+                class="bracket-board"
+                [style.width.px]="finalRounds.length * 276"
+                [style.height.px]="bracketHeight"
+              >
+                <svg
+                  class="bracket-connectors"
+                  [attr.viewBox]="'0 0 ' + finalRounds.length * 100 + ' 100'"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  @for (connector of bracketConnectors; track connector.key) {
+                    <path
+                      [attr.d]="connector.path"
+                      [class.third-place-connector]="connector.isThirdPlace"
+                    ></path>
+                  }
+                </svg>
+
+                @for (phase of finalRounds; track phase.phaseId; let roundIndex = $index) {
+                  <section
+                    class="bracket-round"
+                    [style.left.px]="roundIndex * 276"
+                    [attr.aria-label]="phase.name + ' round'"
+                  >
+                    <div class="bracket-round-title">
+                      <h3>{{ phase.order }}. {{ phase.name }}</h3>
+                      <span>
+                        {{ mainMatchCount(phase) }}/{{ phase.expectedMatchCount ?? '—' }} main matches
+                        @if (phase.isThirdPlace) { · + third place }
+                      </span>
+                    </div>
+                    <div class="bracket-match-area">
+                      @for (match of roundMatches(phase); track match.matchId) {
+                        <article
+                          class="bracket-match"
+                          [style.top.%]="matchPositionPercent(phase, match)"
+                          [attr.aria-label]="'Match ' + match.matchId + ', ' + phase.name"
+                        >
+                          <div
+                            class="bracket-team"
+                            [class.bracket-winner]="winnerTeamId(match) === match.homeTeamId && match.homeTeamId !== null"
+                          >
+                            <span>{{ match.homeTeamName || (match.homeTeamId == null ? 'TBD' : 'Team #' + match.homeTeamId) }}</span>
+                            <strong>{{ match.homeScore ?? '—' }}</strong>
+                          </div>
+                          <div
+                            class="bracket-team"
+                            [class.bracket-winner]="winnerTeamId(match) === match.awayTeamId && match.awayTeamId !== null"
+                          >
+                            <span>{{ match.awayTeamName || (match.awayTeamId == null ? 'TBD' : 'Team #' + match.awayTeamId) }}</span>
+                            <strong>{{ match.awayScore ?? '—' }}</strong>
+                          </div>
+                          <div class="bracket-match-footer">
+                            <span>
+                              {{ match.isThirdPlace ? 'Third place' : ('Position ' + (match.bracketPosition ?? '—')) }}
+                            </span>
+                            @if (
+                              match.state.trim().toUpperCase() === 'FINISHED' &&
+                              match.homeScore != null &&
+                              match.homeScore === match.awayScore
+                            ) {
+                              <span class="bracket-tie">Tied · no advancement</span>
+                            } @else {
+                              <span>{{ match.state }}</span>
+                            }
+                          </div>
+                        </article>
+                      }
+                      @if (!roundMatches(phase).length) {
+                        <p class="bracket-empty">No matches created for this round.</p>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="text-gray-500">Create the round matches to populate the bracket.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
     <div class="grid gap-6">
       @for (phase of developmentPhases; track phase.phaseId) {
-        <mat-card>
-          <mat-card-header>
-            <mat-card-title>{{ phase.name }} ({{ phase.type }})</mat-card-title>
-          </mat-card-header>
-          <mat-card-content class="pt-4">
-            @if (phase.type === 'FINAL') {
-              @if (phase.bracket.length) {
-                <div class="grid gap-3">
-                  @for (match of phase.bracket; track match.matchId) {
-                    <div class="border rounded-lg p-4 flex items-center justify-between">
-                      <div>
-                        <strong>{{ match.roundName || 'Final stage' }}</strong>
-                        <span class="text-gray-500"> · Position {{ match.bracketPosition ?? '-' }}</span>
-                      </div>
-                      <div class="text-center">
-                        {{ match.homeTeamName || ('Team #' + match.homeTeamId) }}
-                        <strong class="mx-3">
-                          {{
-                            match.resultRegistered &&
-                            match.homeScore != null &&
-                            match.awayScore != null
-                              ? (match.homeScore + ' - ' + match.awayScore)
-                              : 'Pending'
-                          }}
-                        </strong>
-                        {{ match.awayTeamName || ('Team #' + match.awayTeamId) }}
-                      </div>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="text-gray-500">No bracket matches registered.</p>
-              }
-            } @else {
+        @if (phase.type !== 'FINAL') {
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>{{ phase.name }} ({{ phase.type }})</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="pt-4">
               @for (group of phase.groups; track group.groupId) {
                 <div class="mb-6">
                   <h3 class="font-semibold mb-2">
@@ -140,9 +204,9 @@
               @if (!phase.groups.length) {
                 <p class="text-gray-500">No groups registered for this phase.</p>
               }
-            }
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
+        }
       }
     </div>
   }

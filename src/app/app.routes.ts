@@ -39,6 +39,8 @@ export const routes: Routes = [
       },
       {
         path: 'sports',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/sports/sports.component').then(
             (m) => m.SportsComponent
@@ -46,6 +48,8 @@ export const routes: Routes = [
       },
       {
         path: 'skills',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/skills/skills.component').then(
             (m) => m.SkillsComponent
@@ -53,6 +57,8 @@ export const routes: Routes = [
       },
       {
         path: 'players/:id/skills',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/player-skills/player-skills.component').then(
             (m) => m.PlayerSkillsComponent
@@ -60,7 +66,8 @@ export const routes: Routes = [
       },
       {
         path: 'players/:id/teams',
-        data: { context: 'player' },
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN', context: 'player' },
         loadComponent: () =>
           import('./pages/business/player-teams/player-teams.component').then(
             (m) => m.PlayerTeamsComponent
@@ -68,6 +75,8 @@ export const routes: Routes = [
       },
       {
         path: 'players',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/players/players.component').then(
             (m) => m.PlayersComponent
@@ -75,7 +84,8 @@ export const routes: Routes = [
       },
       {
         path: 'teams/:id/players',
-        data: { context: 'team' },
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN', context: 'team' },
         loadComponent: () =>
           import('./pages/business/player-teams/player-teams.component').then(
             (m) => m.PlayerTeamsComponent
@@ -83,6 +93,8 @@ export const routes: Routes = [
       },
       {
         path: 'teams',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/teams/teams.component').then(
             (m) => m.TeamsComponent
@@ -90,6 +102,8 @@ export const routes: Routes = [
       },
       {
         path: 'matches',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/matches/matches.component').then(
             (m) => m.MatchesComponent
@@ -97,6 +111,8 @@ export const routes: Routes = [
       },
       {
         path: 'matches/:id/annotations',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/annotations/annotations.component').then(
             (m) => m.AnnotationsComponent
@@ -104,6 +120,8 @@ export const routes: Routes = [
       },
       {
         path: 'tournaments',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/tournaments/tournaments.component').then(
             (m) => m.TournamentsComponent
@@ -111,6 +129,8 @@ export const routes: Routes = [
       },
       {
         path: 'tournaments/:id',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/tournaments/tournament-detail.component').then(
             (m) => m.TournamentDetailComponent
@@ -118,6 +138,8 @@ export const routes: Routes = [
       },
       {
         path: 'team-sports',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/team-sports/team-sports.component').then(
             (m) => m.TeamSportsComponent
@@ -125,6 +147,8 @@ export const routes: Routes = [
       },
       {
         path: 'registrations',
+        canActivate: [roleGuard],
+        data: { requiredRole: 'ADMIN' },
         loadComponent: () =>
           import('./pages/business/registrations/registrations.component').then(
             (m) => m.RegistrationsComponent

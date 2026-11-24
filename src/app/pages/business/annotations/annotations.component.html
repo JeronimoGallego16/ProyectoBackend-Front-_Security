@@ -31,6 +31,20 @@
     </button>
   </div>
 
+  <div class="mb-3 flex items-center gap-2">
+    <mat-checkbox
+      [checked]="showVoidedAnnotations"
+      (change)="showVoidedAnnotations = $event.checked"
+    >
+      Show voided annotations
+    </mat-checkbox>
+    @if (!showVoidedAnnotations && hasVoidedAnnotations) {
+      <span class="text-sm text-gray-500">
+        Voided annotations are hidden from this list but remain in the match history.
+      </span>
+    }
+  </div>
+
   @if (showForm) {
     <div class="mb-6">
       <app-dynamic-form
@@ -52,6 +66,7 @@
     <app-data-table
       [data]="annotationRows"
       [columns]="columns"
+      deleteActionTooltip="Anular y conservar en historial"
       [viewActionVisible]="canViewAnnotation"
       [editActionVisible]="canModifyAnnotation"
       [deleteActionVisible]="canModifyAnnotation"
@@ -64,7 +79,7 @@
   <app-confirm-dialog
     [open]="confirmVoidOpen"
     title="Void annotation"
-    [message]="pendingVoidAnnotation ? 'Void the annotation at minute ' + pendingVoidAnnotation.minute + '? It will remain visible in the match record.' : 'Are you sure?'"
+    [message]="pendingVoidAnnotation ? 'Void the annotation at minute ' + pendingVoidAnnotation.minute + '? It will remain in the match history and can be viewed using Show voided annotations.' : 'Are you sure?'"
     [isLoading]="isLoading"
     (confirm)="onConfirmVoid()"
     (cancel)="onCancelVoid()"
