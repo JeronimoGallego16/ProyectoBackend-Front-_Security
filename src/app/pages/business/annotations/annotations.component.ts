@@ -221,11 +221,11 @@ export class AnnotationsComponent implements OnInit {
           this.annotations = annotations;
           const eligibleIds = new Set(
             [...homeTeam, ...awayTeam].map(
-              (assignment: PlayerTeam) => assignment.playerId
+              (assignment: PlayerTeam) => Number(assignment.playerId)
             )
           );
           this.eligiblePlayers = players.filter((player) =>
-            eligibleIds.has(player.playerId)
+            eligibleIds.has(Number(player.playerId))
           );
           const playerField = this.annotationFormFields.find(
             (field) => field.name === 'playerId'
@@ -378,7 +378,11 @@ export class AnnotationsComponent implements OnInit {
         return;
       }
       const playerId = Number(value.playerId);
-      if (!this.eligiblePlayers.some((player) => player.playerId === playerId)) {
+      if (
+        !this.eligiblePlayers.some(
+          (player) => Number(player.playerId) === playerId
+        )
+      ) {
         this.feedbackHandlerService.warning(
           FeedbackCase.BAD_REQUEST,
           'The selected player must belong to one of the match teams.'

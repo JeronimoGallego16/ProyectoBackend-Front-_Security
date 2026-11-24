@@ -12,6 +12,11 @@
             Annotation creation is available only while the match is ACTIVE.
           </p>
         }
+        @if (matchIsActive && !isLoading && eligiblePlayers.length === 0) {
+          <p class="mt-1 text-sm text-amber-700">
+            No current players from either match team are available.
+          </p>
+        }
       }
     </div>
     <button
