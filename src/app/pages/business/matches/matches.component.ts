@@ -493,7 +493,7 @@ export class MatchesComponent implements OnInit {
         next: () => {
           this.feedbackHandlerService.success(
             FeedbackCase.OK,
-            'Match result registered successfully.'
+            'Final score registered; the match is now FINISHED.'
           );
           this.cancelResultForm();
           this.loadMatches();
@@ -558,16 +558,28 @@ export class MatchesComponent implements OnInit {
         next: () => {
           this.feedbackHandlerService.success(
             FeedbackCase.NO_CONTENT,
-            'Match deleted successfully.'
+            'Match deleted; associated annotations were permanently removed.'
           );
           this.confirmDeleteOpen = false;
           this.pendingDeleteMatch = null;
           this.loadMatches();
         },
-        error: (error: { status?: number }) => {
+        error: (error: {
+          status?: number;
+          error?: { message?: string | string[] };
+        }) => {
+          const responseMessage = error.error?.message;
+          const message = Array.isArray(responseMessage)
+            ? responseMessage.join(' ')
+            : responseMessage ??
+              (error.status === 403
+                ? 'You are not authorized to delete this match.'
+                : error.status === 409
+                  ? 'This match cannot be deleted while it has associated data.'
+                  : 'Could not delete the match. Please try again.');
           this.feedbackHandlerService.error(
             String(error?.status ?? FeedbackCase.SERVER_ERROR),
-            'Could not delete the match. Please try again.'
+            message
           );
           this.confirmDeleteOpen = false;
           this.pendingDeleteMatch = null;
@@ -602,6 +614,17 @@ export class MatchesComponent implements OnInit {
     const formValue = this.getFormValue();
     if (Number(formValue.homeTeamId) === Number(formValue.awayTeamId)) {
       this.submissionError = 'Home and away teams must be different.';
+      return;
+    }
+
+    if (
+      formValue.state.trim().toUpperCase() === 'FINISHED' &&
+      (!this.originalMatch ||
+        this.originalMatch.homeScore == null ||
+        this.originalMatch.awayScore == null)
+    ) {
+      this.submissionError =
+        'Use Register result to enter both scores and finish the match.';
       return;
     }
 

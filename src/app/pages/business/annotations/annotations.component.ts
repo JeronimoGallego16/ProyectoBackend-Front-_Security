@@ -118,6 +118,7 @@ export class AnnotationsComponent implements OnInit {
   public showForm = false;
   public isEditing = false;
   public isLoading = false;
+  public showVoidedAnnotations = false;
   public confirmVoidOpen = false;
   public pendingVoidAnnotation: Annotation | null = null;
   public detailOpen = false;
@@ -134,10 +135,19 @@ export class AnnotationsComponent implements OnInit {
   }
 
   public get annotationRows(): AnnotationRow[] {
-    return this.annotations.map((annotation) => ({
-      ...annotation,
-      status: annotation.voided ? 'Voided' : 'Active',
-    }));
+    return this.annotations
+      .filter(
+        (annotation) =>
+          this.showVoidedAnnotations || !annotation.voided
+      )
+      .map((annotation) => ({
+        ...annotation,
+        status: annotation.voided ? 'Voided' : 'Active',
+      }));
+  }
+
+  public get hasVoidedAnnotations(): boolean {
+    return this.annotations.some((annotation) => annotation.voided);
   }
 
   public get formFields(): FormFieldConfig[] {
@@ -307,7 +317,7 @@ export class AnnotationsComponent implements OnInit {
         next: () => {
           this.feedbackHandlerService.success(
             FeedbackCase.NO_CONTENT,
-            'Annotation voided successfully.'
+            'Annotation voided. It remains in the audit history and is hidden from the active list.'
           );
           this.closeVoidDialog();
           this.loadData();

@@ -34,6 +34,7 @@ export class DataTableComponent {
   @Input() data: any[] = [];
   @Input() columns: TableColumn[] = [];
   @Input() deleteDisabled = false;
+  @Input() deleteActionTooltip = 'Eliminar';
   @Input() showActions = true;
   @Input() actions: TableAction[] = [];
   @Input() viewActionVisible?: (row: object) => boolean;
